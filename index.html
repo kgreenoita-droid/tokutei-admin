@@ -13,7 +13,6 @@ body { min-height:100vh; background:linear-gradient(135deg,#0c0a24 0%,#16113a 55
 .card-login { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:24px; padding:40px 36px; max-width:420px; width:100%; text-align:center; }
 .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
 input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
-/* ★ 修正：selectの文字色を白に */
 select { background:#1a1440; border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
 select option { background:#1a1440; color:#fff; }
 .btn { border:none; border-radius:10px; padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -51,7 +50,7 @@ td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); }
 // ═══════════════════════════════════════════
 const SUPABASE_URL = 'https://uaxyxphvtouadfonmwzp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVheHl4cGh2dG91YWRmb25td3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTc3ODYsImV4cCI6MjA5NDYzMzc4Nn0.iOXMmfwj7UfeoKOZdVuM6ZMbQVPXOYD9rhgqpKmgiIU';
-const ADMIN_PASSWORD = 'admin1234'; // ← 変更推奨
+const ADMIN_PASSWORD = 'admin1234';
 // ═══════════════════════════════════════════
 
 const CODE_EXPIRY_MS = 24*60*60*1000;
@@ -110,15 +109,10 @@ function overallComment(scores){
   return `この候補者は${p}タイプです。面接では「${f}」についてさらに確認することをお勧めします。`;
 }
 
-// ★ ログイン状態をlocalStorageで管理
 function isAuthed(){ return localStorage.getItem('tg_admin_authed')==='true'; }
 function setAuthed(v){ if(v) localStorage.setItem('tg_admin_authed','true'); else localStorage.removeItem('tg_admin_authed'); }
 
-let state = {
-  tab:'results', codes:[], results:[], detail:null,
-  filterLang:'all', filterV:'all', newLang:'id', newNote:'',
-  loading:false, copyMsg:{}, pwErr:false,
-};
+let state = { tab:'results', codes:[], results:[], detail:null, filterLang:'all', filterV:'all', newLang:'id', newNote:'', loading:false, copyMsg:{}, pwErr:false };
 
 async function loadAll(){
   state.loading=true; render();
@@ -129,7 +123,7 @@ async function loadAll(){
 }
 
 async function addCode(){
-  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:Date.now()+CODE_EXPIRY_MS,used_at:null};
+  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:Date.now()+CODE_EXPIRY_MS};
   await sb.from('codes').insert(c);
   state.newNote=''; await loadAll();
 }
@@ -138,19 +132,17 @@ async function deleteCode(code){
   await sb.from('codes').delete().eq('code',code); await loadAll();
 }
 
-// ★ PDF保存時のファイル名を「番号_名前」にする
 function printResult(r){
   const langInfo=LANGUAGES.find(l=>l.code===r.lang);
   const qs=generateIQs(r.scores);
   const lcP=s=>s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
   const lvP=s=>s>=70?'高':s>=40?'中':'低';
-  // ファイル名設定
   const fileName=`${r.name}_性格診断結果`;
   document.title=fileName;
   document.getElementById('printArea').innerHTML=`
     <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:8pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-end">
       <div>
-        <h1 style="font-size:15pt;margin:0">特定技能候補者 性格診断結果</h1>
+        <h1 style="font-size:15pt;margin:0">候補者 性格診断結果</h1>
         <p style="font-size:8.5pt;color:#666;margin:2pt 0 0">Big Five Personality Assessment — Tokutei Ginou</p>
       </div>
       <div style="text-align:right;font-size:8pt;color:#888">
@@ -178,10 +170,9 @@ function printResult(r){
     <ol style="margin:0;padding-left:14pt;font-size:8.5pt">${qs.map(q=>`<li style="margin-bottom:3pt">${q}</li>`).join('')}</ol>
     ${!r.validity.ok?`<div style="margin-top:10pt;background:#fff8f0;border:1px solid #f4c87a;border-radius:5pt;padding:7pt 11pt;font-size:8.5pt"><b style="color:#c07030">⚠️ 回答信頼性：</b>実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
     <div style="margin-top:14pt;padding-top:6pt;border-top:1px solid #ddd;font-size:7.5pt;color:#aaa;display:flex;justify-content:space-between">
-      <span>特定技能候補者 性格診断システム</span><span>コード：${r.code}</span>
+      <span>候補者 性格診断システム — Tokutei Ginou</span><span>コード：${r.code}</span>
     </div>`;
   window.print();
-  // 印刷後にタイトルを元に戻す
   setTimeout(()=>{ document.title='管理者ダッシュボード | Tokutei Ginou'; },2000);
 }
 
@@ -196,7 +187,7 @@ function renderLogin(){
   return `<div class="login-wrap"><div class="card-login">
     <div style="font-size:44px;margin-bottom:14px">🔐</div>
     <h1 style="font-size:22px;margin-bottom:6px">管理者ダッシュボード</h1>
-    <p style="color:rgba(255,255,255,0.4);font-size:13px;margin-bottom:28px">特定技能候補者 性格診断管理システム</p>
+    <p style="color:rgba(255,255,255,0.4);font-size:13px;margin-bottom:28px">候補者 性格診断管理システム</p>
     <input id="pwInput" type="password" placeholder="管理者パスワード" style="width:100%;text-align:center;margin-bottom:8px">
     ${state.pwErr?'<p class="error">パスワードが正しくありません</p>':''}
     <button class="btn btn-pink" id="loginBtn" style="width:100%;padding:14px;font-size:15px;margin-top:4px">ログイン</button>
@@ -216,12 +207,12 @@ function renderDashboard(){
     {l:'信頼性：要注意',v:state.results.filter(r=>!r.validity.ok).length,c:'#F4A261'},
     {l:'直近7日',v:state.results.filter(r=>Date.now()-new Date(r.date).getTime()<7*86400000).length,c:'#9B8EF7'},
   ];
-  const validCodes=state.codes.filter(c=>!c.used_at&&Date.now()<c.expires_at).length;
+  const validCodes=state.codes.filter(c=>Date.now()<c.expires_at).length;
   return `<div class="page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
         <h1 style="font-size:22px;font-weight:800">🗂️ 管理者ダッシュボード</h1>
-        <p style="color:rgba(255,255,255,0.4);margin-top:4px;font-size:12px">特定技能候補者 性格診断管理システム</p>
+        <p style="color:rgba(255,255,255,0.4);margin-top:4px;font-size:12px">候補者 性格診断管理システム</p>
       </div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-ghost" id="refreshBtn">${state.loading?'読み込み中…':'🔄 最新に更新'}</button>
@@ -250,7 +241,7 @@ function renderResultsTab(filtered,stats){
     ?`<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
     :filtered.map((r,i)=>{
         const li=LANGUAGES.find(l=>l.code===r.lang);
-        return `<tr data-idx="${i}">
+        return `<tr>
           <td style="font-weight:700">${r.name}</td>
           <td><span style="font-size:15px">${li?.flag}</span></td>
           <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${fmt(r.date)}</td>
@@ -284,15 +275,17 @@ function renderResultsTab(filtered,stats){
 
 function renderCodesTab(){
   const rows=state.codes.length===0
-    ?`<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
+    ?`<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
     :state.codes.map((c,i)=>{
         const li=LANGUAGES.find(l=>l.code===c.lang);
-        const expired=Date.now()>c.expires_at,used=!!c.used_at;
-        const st=used?'used':expired?'expired':'active';
-        const stStyle={active:{bg:'rgba(91,200,175,0.12)',col:'#5BC8AF',label:'✅ 有効'},used:{bg:'rgba(155,142,247,0.12)',col:'#9B8EF7',label:'✔ 使用済'},expired:{bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)',label:'⏰ 期限切れ'}}[st];
-        const copyBtn=st==='active'
+        // ★ 有効期限のみで判定（使用済みなし）
+        const expired=Date.now()>c.expires_at;
+        const stStyle=expired
+          ?{bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)',label:'⏰ 期限切れ'}
+          :{bg:'rgba(91,200,175,0.12)',col:'#5BC8AF',label:'✅ 有効'};
+        const copyBtn=!expired
           ?`<button class="btn-sm" style="background:${state.copyMsg[c.code]?'rgba(91,200,175,0.15)':'rgba(108,155,247,0.15)'};border-color:${state.copyMsg[c.code]?'rgba(91,200,175,0.3)':'rgba(108,155,247,0.3)'};color:${state.copyMsg[c.code]?'#5BC8AF':'#6C9BF7'}" data-copy="${c.code}">${state.copyMsg[c.code]?'✓ コピー済':'コピー'}</button>`:'';
-        return `<tr style="opacity:${st!=='active'?0.55:1}">
+        return `<tr style="opacity:${expired?0.55:1}">
           <td style="font-family:monospace;font-weight:700;letter-spacing:1px;font-size:13px">${c.code}</td>
           <td><span style="font-size:15px">${li?.flag}</span> <span style="color:rgba(255,255,255,0.4);font-size:11px">${li?.label}</span></td>
           <td style="color:rgba(255,255,255,0.6);font-size:12px">${c.note||'—'}</td>
@@ -310,10 +303,10 @@ function renderCodesTab(){
         <select id="newLangSel">
           ${LANGUAGES.map(l=>`<option value="${l.code}" ${state.newLang===l.code?'selected':''}>${l.flag} ${l.label}</option>`).join('')}
         </select>
-        <input id="newNoteInput" placeholder="メモ（候補者名など・任意）" style="flex:1;min-width:160px" value="${state.newNote}">
+        <input id="newNoteInput" placeholder="メモ（任意）" style="flex:1;min-width:160px" value="${state.newNote}">
         <button class="btn btn-green" id="addCodeBtn">＋ 発行する</button>
       </div>
-      <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">コードは発行から24時間有効・1回のみ使用可能です。</p>
+      <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">コードは発行から24時間有効です。同じコードで何人でも受験できます。</p>
     </div>
     <div class="glass" style="overflow-x:auto">
       <table>
@@ -410,7 +403,7 @@ function bindDashboard(){
     btn.addEventListener('click',()=>{
       const code=btn.dataset.copy;
       navigator.clipboard?.writeText(code);
-      state.copyMsg[code]=true; render();
+      state.copyMsg[code]=true;render();
       setTimeout(()=>{state.copyMsg[code]=false;render();},1500);
     });
   });
@@ -422,7 +415,6 @@ function bindDetail(){
   document.getElementById('printBtn')?.addEventListener('click',()=>{printResult(state.detail);});
 }
 
-// ★ 起動時にログイン済みなら自動でデータ読み込み
 if(isAuthed()) loadAll(); else render();
 </script>
 </body>
