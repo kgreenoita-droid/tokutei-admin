@@ -12,7 +12,10 @@ body { min-height:100vh; background:linear-gradient(135deg,#0c0a24 0%,#16113a 55
 .glass { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:14px; }
 .card-login { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:24px; padding:40px 36px; max-width:420px; width:100%; text-align:center; }
 .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
-input, select { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
+input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
+/* ★ 修正：selectの文字色を白に */
+select { background:#1a1440; border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
+select option { background:#1a1440; color:#fff; }
 .btn { border:none; border-radius:10px; padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
 .btn-primary { background:linear-gradient(135deg,#6C9BF7,#4a7af5); color:#fff; }
 .btn-green   { background:linear-gradient(135deg,#5BC8AF,#38a98e); color:#fff; }
@@ -21,9 +24,8 @@ input, select { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255
 .btn-sm { padding:4px 10px; font-size:11px; border-radius:6px; font-weight:700; cursor:pointer; font-family:inherit; border:1px solid; }
 .error { color:#F4A261; font-size:12px; margin:0 0 10px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
-th { color:rgba(255,255,255,0.4); font-weight:700; font-size:11px; padding:10px 12pxSUP; text-align:left; white-space:nowrap; border-bottom:1px solid rgba(255,255,255,0.08); }
+th { color:rgba(255,255,255,0.4); font-weight:700; font-size:11px; padding:10px 12px; text-align:left; white-space:nowrap; border-bottom:1px solid rgba(255,255,255,0.08); }
 td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); }
-tr:hover td { background:rgba(255,255,255,0.02); }
 .badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:5px; white-space:nowrap; }
 .tab-btn { background:transparent; border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.45); border-radius:8px; padding:8px 18px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
 .tab-btn.active { background:rgba(108,155,247,0.22); border-color:rgba(108,155,247,0.45); color:#6C9BF7; }
@@ -32,25 +34,17 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 .stat-card { padding:12px 18px; text-align:center; flex:1; min-width:120px; }
 .stat-val { font-weight:800; font-size:22px; margin-bottom:2px; }
 .stat-lbl { color:rgba(255,255,255,0.4); font-size:11px; }
-.section-title { font-size:11px; color:rgba(255,255,255,0.4); font-weight:700; padding:10px 12px 6px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:0; }
-
-/* Print */
 @media print {
-  body > *:not(#printArea) { display:none !important; }
-  #printArea { display:block !important; font-family:'Noto Sans JP','Noto Sans',sans-serif; color:#1a1a2e; font-size:9.5pt; line-height:1.65; }
-  @page { margin:15mm; size:A4; }
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;font-family:'Noto Sans JP','Noto Sans',sans-serif;color:#1a1a2e;font-size:9.5pt;line-height:1.65}
+  @page{margin:15mm;size:A4}
 }
-#printArea { display:none; }
+#printArea{display:none}
 </style>
 </head>
 <body>
-
-<!-- PRINT AREA -->
 <div id="printArea"></div>
-
-<!-- APP -->
 <div id="app"></div>
-
 <script>
 // ═══════════════════════════════════════════
 // ★ ここにSupabaseの情報を入力してください ★
@@ -60,108 +54,100 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const ADMIN_PASSWORD = 'admin1234'; // ← 変更推奨
 // ═══════════════════════════════════════════
 
-const CODE_EXPIRY_MS = 24 * 60 * 60 * 1000;
+const CODE_EXPIRY_MS = 24*60*60*1000;
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const LANGUAGES = [
-  { code:'ja', label:'日本語',        flag:'🇯🇵', nativeName:'日本語' },
-  { code:'id', label:'インドネシア語', flag:'🇮🇩', nativeName:'Bahasa Indonesia' },
-  { code:'my', label:'ミャンマー語',   flag:'🇲🇲', nativeName:'မြန်မာဘာသာ' },
+  {code:'ja',label:'日本語',flag:'🇯🇵',nativeName:'日本語'},
+  {code:'id',label:'インドネシア語',flag:'🇮🇩',nativeName:'Bahasa Indonesia'},
+  {code:'my',label:'ミャンマー語',flag:'🇲🇲',nativeName:'မြန်မာဘာသာ'},
 ];
 
 const DIMS = {
-  O:{ icon:'✦', color:'#6C9BF7', ja:{name:'開放性',desc:'新しい経験・アイデアへの好奇心や創造性'}, id:{name:'Keterbukaan',desc:'Rasa ingin tahu dan kreativitas'}, my:{name:'ဖွင့်လှစ်မှု',desc:'အတွေ့အကြုံအသစ်နှင့် စိတ်ကူးစိတ်သန်းများအပေါ် စူးစမ်းလိုစိတ်'} },
-  C:{ icon:'◈', color:'#5BC8AF', ja:{name:'誠実性',desc:'責任感・計画性・自己規律'}, id:{name:'Ketelitian',desc:'Tanggung jawab, perencanaan, disiplin diri'}, my:{name:'လိုက်နာမှု',desc:'တာဝန်ယူမှု၊ စီစဉ်ဆောင်ရွက်မှုနှင့် မိမိကိုယ်ကို စည်းကမ်းထိန်းသိမ်းမှု'} },
-  E:{ icon:'◉', color:'#F4A261', ja:{name:'外向性',desc:'社交性・活動性・自己主張'}, id:{name:'Ekstraversi',desc:'Kemampuan bersosialisasi, semangat, ketegasan diri'}, my:{name:'ပြင်ပလှည့်မှု',desc:'လူမှုဆက်ဆံရေး၊ တက်ကြွမှုနှင့် မိမိကိုင်းကျမှု'} },
-  A:{ icon:'❋', color:'#E76F9A', ja:{name:'協調性',desc:'思いやり・協力・信頼性'}, id:{name:'Keramahan',desc:'Empati, kerja sama, kepercayaan'}, my:{name:'ပူးပေါင်းဆောင်ရွက်မှု',desc:'စာနာမှု၊ ပူးပေါင်းဆောင်ရွက်မှုနှင့် ယုံကြည်စိတ်ချမှု'} },
-  N:{ icon:'◎', color:'#9B8EF7', ja:{name:'神経症傾向',desc:'感情の不安定さ・ストレスへの敏感さ（低いほど安定）'}, id:{name:'Neurotisisme',desc:'Ketidakstabilan emosi dan sensitivitas stres (skor rendah = stabil)'}, my:{name:'စိတ်မငြိမ်မသက်မှု',desc:'စိတ်ခံစားချက် မတည်ငြိမ်မှုနှင့် စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်မှု'} },
+  O:{icon:'✦',color:'#6C9BF7',ja:{name:'開放性',desc:'新しい経験・アイデアへの好奇心や創造性'},id:{name:'Keterbukaan',desc:'Rasa ingin tahu dan kreativitas'},my:{name:'ဖွင့်လှစ်မှု',desc:'အတွေ့အကြုံအသစ်နှင့် စိတ်ကူးစိတ်သန်းများအပေါ် စူးစမ်းလိုစိတ်'}},
+  C:{icon:'◈',color:'#5BC8AF',ja:{name:'誠実性',desc:'責任感・計画性・自己規律'},id:{name:'Ketelitian',desc:'Tanggung jawab, perencanaan, disiplin diri'},my:{name:'လိုက်နာမှု',desc:'တာဝန်ယူမှု၊ စီစဉ်ဆောင်ရွက်မှုနှင့် မိမိကိုယ်ကို စည်းကမ်းထိန်းသိမ်းမှု'}},
+  E:{icon:'◉',color:'#F4A261',ja:{name:'外向性',desc:'社交性・活動性・自己主張'},id:{name:'Ekstraversi',desc:'Kemampuan bersosialisasi, semangat, ketegasan diri'},my:{name:'ပြင်ပလှည့်မှု',desc:'လူမှုဆက်ဆံရေး၊ တက်ကြွမှုနှင့် မိမိကိုင်းကျမှု'}},
+  A:{icon:'❋',color:'#E76F9A',ja:{name:'協調性',desc:'思いやり・協力・信頼性'},id:{name:'Keramahan',desc:'Empati, kerja sama, kepercayaan'},my:{name:'ပူးပေါင်းဆောင်ရွက်မှု',desc:'စာနာမှု၊ ပူးပေါင်းဆောင်ရွက်မှုနှင့် ယုံကြည်စိတ်ချမှု'}},
+  N:{icon:'◎',color:'#9B8EF7',ja:{name:'神経症傾向',desc:'感情の不安定さ・ストレスへの敏感さ（低いほど安定）'},id:{name:'Neurotisisme',desc:'Ketidakstabilan emosi dan sensitivitas stres (skor rendah = stabil)'},my:{name:'စိတ်မငြိမ်မသက်မှု',desc:'စိတ်ခံစားချက် မတည်ငြိမ်မှုနှင့် စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်မှု'}},
 };
 
 const INTERP = {
-  O:{ ja:{high:'新しい技術・業務への適応力が高く、変化する職場でも積極的に学べます。',mid:'慣れた環境では安定して働けますが、必要に応じて新しいことにも取り組めます。',low:'手順通りに着実に仕事を進めるタイプです。定型業務での安定したパフォーマンスが期待できます。'}, id:{high:'Kemampuan adaptasi tinggi terhadap teknologi dan tugas baru.',mid:'Bekerja stabil di lingkungan yang familiar, namun bisa menghadapi hal baru.',low:'Tipe bekerja teratur sesuai prosedur.'}, my:{high:'နည်းပညာနှင့် တာဝန်အသစ်တို့ကို လိုက်လျောညီထွေဖြစ်နိုင်မှု မြင့်မားသည်။',mid:'ကျွမ်းဝင်သောပတ်ဝန်းကျင်တွင် တည်ငြိမ်စွာ လုပ်ဆောင်နိုင်သည်။',low:'သတ်မှတ်ထားသောလုပ်ငန်းစဉ်အတိုင်း တိကျစွာ ဆောင်ရွက်သောအမျိုးအစားဖြစ်သည်။'} },
-  C:{ ja:{high:'責任感が強く、自己管理能力に優れています。特定技能の現場でも安心して任せられます。',mid:'基本的な業務は誠実にこなせます。明確な指示があるとより力を発揮します。',low:'指示やフォローアップが必要な場面があります。構造化されたサポートが有効です。'}, id:{high:'Rasa tanggung jawab kuat dan kemampuan manajemen diri baik.',mid:'Dapat menyelesaikan tugas dasar dengan jujur.',low:'Mungkin memerlukan instruksi dan tindak lanjut.'}, my:{high:'တာဝန်ယူမှုခံစားချက် ပြင်းထန်ပြီး မိမိကိုယ်ကို စီမံခန့်ခွဲနိုင်မှု ထူးချွန်သည်။',mid:'အခြေခံတာဝန်များကို ရိုးသားစွာ ဆောင်ရွက်နိုင်သည်။',low:'ညွှန်ကြားချက်နှင့် ဆက်လက်ကူညီမှု လိုအပ်သောအချိန်များ ရှိနိုင်သည်။'} },
-  E:{ ja:{high:'積極的でコミュニケーション能力が高く、チームの雰囲気を明るくします。',mid:'状況に応じて積極的にも控えめにもなれるバランス型です。',low:'慎重で落ち着いた性格です。個人作業や専門業務で力を発揮します。'}, id:{high:'Aktif dan komunikatif, dapat mencerahkan suasana tim.',mid:'Tipe seimbang yang bisa aktif atau pendiam sesuai situasi.',low:'Karakter hati-hati dan tenang.'}, my:{high:'တက်ကြွပြီး ဆက်သွယ်ရေးစွမ်းရည် မြင့်မားသည်။',mid:'အခြေအနေပေါ်မူတည်၍ မျှတသောပုံစံ။',low:'သတိကြီးပြီး တည်ငြိမ်သောကိုယ်ရည်ကိုယ်သွေး ရှိသည်။'} },
-  A:{ ja:{high:'思いやりがあり、チームワークに優れています。日本の職場文化に馴染みやすいタイプです。',mid:'協調性はありますが、自分の意見もしっかり持っています。',low:'自己主張が強い面があります。役割と期待値を明確にすることで力を発揮します。'}, id:{high:'Penuh empati dan unggul dalam kerja tim.',mid:'Memiliki kemampuan kerja sama namun juga memiliki pendapat sendiri.',low:'Cenderung tegas.'}, my:{high:'စာနာမှုရှိပြီး အဖွဲ့လုပ်ငန်းတွင် ထူးချွန်သည်။',mid:'ပူးပေါင်းဆောင်ရွက်မှုစွမ်းရည် ရှိသော်လည်း မိမိ၏ မြင်ကွင်းကိုလည်း ကိုင်ဆောင်ထားသည်။',low:'မိမိကိုင်းကျမှု ပြင်းထန်သောဘက်ရှိသည်။'} },
-  N:{ ja:{high:'ストレスに敏感な面があります。サポート体制や丁寧なコミュニケーションが助けになります。',mid:'感情の波はありますが、対処能力も持っています。',low:'感情が安定しており、プレッシャーの多い現場でも冷静に対応できます。'}, id:{high:'Cukup sensitif terhadap stres.',mid:'Ada naik turun emosi namun memiliki kemampuan untuk mengatasinya.',low:'Emosi stabil dan dapat menghadapi tekanan dengan tenang.'}, my:{high:'စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်သောဘက်ရှိသည်။',mid:'ခံစားချက်တက်ကျမှု ရှိသော်လည်း ကိုင်တွယ်ဖြေရှင်းနိုင်မှုစွမ်းရည်လည်း ရှိသည်။',low:'ခံစားချက်များ တည်ငြိမ်ပြီး ဖိစီးမှုများသောလုပ်ငန်းခွင်တွင်လည်း တည်ငြိမ်စွာ ကိုင်တွယ်နိုင်သည်။'} },
+  O:{ja:{high:'新しい技術・業務への適応力が高く、変化する職場でも積極的に学べます。',mid:'慣れた環境では安定して働けますが、必要に応じて新しいことにも取り組めます。',low:'手順通りに着実に仕事を進めるタイプです。定型業務での安定したパフォーマンスが期待できます。'},id:{high:'Kemampuan adaptasi tinggi terhadap teknologi dan tugas baru.',mid:'Bekerja stabil di lingkungan yang familiar, namun bisa menghadapi hal baru.',low:'Tipe bekerja teratur sesuai prosedur.'},my:{high:'နည်းပညာနှင့် တာဝန်အသစ်တို့ကို လိုက်လျောညီထွေဖြစ်နိုင်မှု မြင့်မားသည်။',mid:'ကျွမ်းဝင်သောပတ်ဝန်းကျင်တွင် တည်ငြိမ်စွာ လုပ်ဆောင်နိုင်သည်။',low:'သတ်မှတ်ထားသောလုပ်ငန်းစဉ်အတိုင်း တိကျစွာ ဆောင်ရွက်သောအမျိုးအစားဖြစ်သည်။'}},
+  C:{ja:{high:'責任感が強く、自己管理能力に優れています。特定技能の現場でも安心して任せられます。',mid:'基本的な業務は誠実にこなせます。明確な指示があるとより力を発揮します。',low:'指示やフォローアップが必要な場面があります。構造化されたサポートが有効です。'},id:{high:'Rasa tanggung jawab kuat dan kemampuan manajemen diri baik.',mid:'Dapat menyelesaikan tugas dasar dengan jujur.',low:'Mungkin memerlukan instruksi dan tindak lanjut.'},my:{high:'တာဝန်ယူမှုခံစားချက် ပြင်းထန်ပြီး မိမိကိုယ်ကို စီမံခန့်ခွဲနိုင်မှု ထူးချွန်သည်။',mid:'အခြေခံတာဝန်များကို ရိုးသားစွာ ဆောင်ရွက်နိုင်သည်။',low:'ညွှန်ကြားချက်နှင့် ဆက်လက်ကူညီမှု လိုအပ်သောအချိန်များ ရှိနိုင်သည်။'}},
+  E:{ja:{high:'積極的でコミュニケーション能力が高く、チームの雰囲気を明るくします。',mid:'状況に応じて積極的にも控えめにもなれるバランス型です。',low:'慎重で落ち着いた性格です。個人作業や専門業務で力を発揮します。'},id:{high:'Aktif dan komunikatif, dapat mencerahkan suasana tim.',mid:'Tipe seimbang yang bisa aktif atau pendiam sesuai situasi.',low:'Karakter hati-hati dan tenang.'},my:{high:'တက်ကြွပြီး ဆက်သွယ်ရေးစွမ်းရည် မြင့်မားသည်။',mid:'အခြေအနေပေါ်မူတည်၍ မျှတသောပုံစံ။',low:'သတိကြီးပြီး တည်ငြိမ်သောကိုယ်ရည်ကိုယ်သွေး ရှိသည်။'}},
+  A:{ja:{high:'思いやりがあり、チームワークに優れています。日本の職場文化に馴染みやすいタイプです。',mid:'協調性はありますが、自分の意見もしっかり持っています。',low:'自己主張が強い面があります。役割と期待値を明確にすることで力を発揮します。'},id:{high:'Penuh empati dan unggul dalam kerja tim.',mid:'Memiliki kemampuan kerja sama namun juga memiliki pendapat sendiri.',low:'Cenderung tegas.'},my:{high:'စာနာမှုရှိပြီး အဖွဲ့လုပ်ငန်းတွင် ထူးချွန်သည်။',mid:'ပူးပေါင်းဆောင်ရွက်မှုစွမ်းရည် ရှိသော်လည်း မိမိ၏ မြင်ကွင်းကိုလည်း ကိုင်ဆောင်ထားသည်။',low:'မိမိကိုင်းကျမှု ပြင်းထန်သောဘက်ရှိသည်။'}},
+  N:{ja:{high:'ストレスに敏感な面があります。サポート体制や丁寧なコミュニケーションが助けになります。',mid:'感情の波はありますが、対処能力も持っています。',low:'感情が安定しており、プレッシャーの多い現場でも冷静に対応できます。'},id:{high:'Cukup sensitif terhadap stres.',mid:'Ada naik turun emosi namun memiliki kemampuan untuk mengatasinya.',low:'Emosi stabil dan dapat menghadapi tekanan dengan tenang.'},my:{high:'စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်သောဘက်ရှိသည်။',mid:'ခံစားချက်တက်ကျမှု ရှိသော်လည်း ကိုင်တွယ်ဖြေရှင်းနိုင်မှုစွမ်းရည်လည်း ရှိသည်။',low:'ခံစားချက်များ တည်ငြိမ်ပြီး ဖိစီးမှုများသောလုပ်ငန်းခွင်တွင်လည်း တည်ငြိမ်စွာ ကိုင်တွယ်နိုင်သည်။'}},
 };
 
-function getLevel(s){ return s>=70?'high':s>=40?'mid':'low'; }
-function interpText(dim,s,lang){ return INTERP[dim][lang][getLevel(s)]; }
-function fmt(dt){ return new Date(dt).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
-function fmtShort(dt){ return new Date(dt).toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
-function genCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; const s=n=>Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join(''); return `${s(4)}-${s(4)}-${s(4)}`; }
-function lv(s){ return s>=70?'高':s>=40?'中':'低'; }
-function lc(s){ return s>=70?'#5BC8AF':s>=40?'#F4A261':'#9B8EF7'; }
+function getLevel(s){return s>=70?'high':s>=40?'mid':'low';}
+function interpText(dim,s,lang){return INTERP[dim][lang][getLevel(s)];}
+function fmt(dt){return new Date(dt).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function fmtShort(dt){return new Date(dt).toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const s=n=>Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');return `${s(4)}-${s(4)}-${s(4)}`;}
+function lv(s){return s>=70?'高':s>=40?'中':'低';}
+function lc(s){return s>=70?'#5BC8AF':s>=40?'#F4A261':'#9B8EF7';}
 
 function generateIQs(scores){
-  const {O,C,E,A,N}=scores, qs=[];
+  const {O,C,E,A,N}=scores,qs=[];
   qs.push('日本での仕事に応募した理由・動機を教えてください。');
-  if(O>=70) qs.push('経験したことのない業務に挑戦した具体的な経験を教えてください。');
-  if(O<40)  qs.push('日本の職場は慣れない環境ですが、どのように適応する予定ですか？');
-  if(C<40)  qs.push('過去に締め切りに間に合わなかった経験と、その対処法を教えてください。');
-  if(C>=70) qs.push('仕事の品質を保つために日頃から心がけていることは何ですか？');
-  if(E<40)  qs.push('慣れない職場での上司・同僚とのコミュニケーション方法を教えてください。');
-  if(A<40)  qs.push('チームメンバーと意見が対立した際、どのように解決しましたか？');
-  if(N>=70) qs.push('仕事でプレッシャーを感じた時、どのように気持ちを立て直しますか？');
+  if(O>=70)qs.push('経験したことのない業務に挑戦した具体的な経験を教えてください。');
+  if(O<40)qs.push('日本の職場は慣れない環境ですが、どのように適応する予定ですか？');
+  if(C<40)qs.push('過去に締め切りに間に合わなかった経験と、その対処法を教えてください。');
+  if(C>=70)qs.push('仕事の品質を保つために日頃から心がけていることは何ですか？');
+  if(E<40)qs.push('慣れない職場での上司・同僚とのコミュニケーション方法を教えてください。');
+  if(A<40)qs.push('チームメンバーと意見が対立した際、どのように解決しましたか？');
+  if(N>=70)qs.push('仕事でプレッシャーを感じた時、どのように気持ちを立て直しますか？');
   return qs;
 }
 
 function overallComment(scores){
-  const {O,C,E,A,N}=scores, t=[];
-  if(C>=70)t.push('誠実で責任感が強い'); if(A>=70)t.push('チームワークを大切にできる');
-  if(E>=70)t.push('積極的でコミュニケーション力が高い'); if(N<=40)t.push('感情が安定している');
+  const {O,C,E,A,N}=scores,t=[];
+  if(C>=70)t.push('誠実で責任感が強い');if(A>=70)t.push('チームワークを大切にできる');
+  if(E>=70)t.push('積極的でコミュニケーション力が高い');if(N<=40)t.push('感情が安定している');
   if(O>=60)t.push('新しいことへの適応力がある');
   const p=t.length?t.join('・'):'バランスの取れた';
   const f=N>=70?'ストレス対処法や職場サポート体制':C<40?'業務の自己管理や責任感':'具体的な業務経験や意欲';
   return `この候補者は${p}タイプです。面接では「${f}」についてさらに確認することをお勧めします。`;
 }
 
-// ─── STATE ───
+// ★ ログイン状態をlocalStorageで管理
+function isAuthed(){ return localStorage.getItem('tg_admin_authed')==='true'; }
+function setAuthed(v){ if(v) localStorage.setItem('tg_admin_authed','true'); else localStorage.removeItem('tg_admin_authed'); }
+
 let state = {
-  authed: false,
-  pw: '',
-  pwErr: false,
-  tab: 'results',
-  codes: [],
-  results: [],
-  detail: null,
-  filterLang: 'all',
-  filterV: 'all',
-  newLang: 'id',
-  newNote: '',
-  loading: false,
-  copyMsg: {},
+  tab:'results', codes:[], results:[], detail:null,
+  filterLang:'all', filterV:'all', newLang:'id', newNote:'',
+  loading:false, copyMsg:{}, pwErr:false,
 };
 
-// ─── SUPABASE ───
 async function loadAll(){
-  state.loading = true; render();
-  const { data: codes } = await sb.from('codes').select('*').order('created_at', {ascending:false});
-  const { data: results } = await sb.from('results').select('*').order('created_at', {ascending:false});
-  state.codes = codes || [];
-  state.results = results || [];
-  state.loading = false; render();
+  state.loading=true; render();
+  const {data:codes}=await sb.from('codes').select('*').order('created_at',{ascending:false});
+  const {data:results}=await sb.from('results').select('*').order('created_at',{ascending:false});
+  state.codes=codes||[]; state.results=results||[];
+  state.loading=false; render();
 }
 
 async function addCode(){
-  const c = { code:genCode(), lang:state.newLang, note:state.newNote.trim()||null, created_at:Date.now(), expires_at:Date.now()+CODE_EXPIRY_MS, used_at:null };
+  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:Date.now()+CODE_EXPIRY_MS,used_at:null};
   await sb.from('codes').insert(c);
-  state.newNote = '';
-  await loadAll();
+  state.newNote=''; await loadAll();
 }
 
 async function deleteCode(code){
-  await sb.from('codes').delete().eq('code', code);
-  await loadAll();
+  await sb.from('codes').delete().eq('code',code); await loadAll();
 }
 
-// ─── PRINT ───
+// ★ PDF保存時のファイル名を「番号_名前」にする
 function printResult(r){
-  const langInfo = LANGUAGES.find(l=>l.code===r.lang);
-  const qs = generateIQs(r.scores);
-  const lcPrint = s => s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
-  const lvPrint = s => s>=70?'高':s>=40?'中':'低';
-  document.getElementById('printArea').innerHTML = `
+  const langInfo=LANGUAGES.find(l=>l.code===r.lang);
+  const qs=generateIQs(r.scores);
+  const lcP=s=>s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
+  const lvP=s=>s>=70?'高':s>=40?'中':'低';
+  // ファイル名設定
+  const fileName=`${r.name}_性格診断結果`;
+  document.title=fileName;
+  document.getElementById('printArea').innerHTML=`
     <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:8pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-end">
       <div>
         <h1 style="font-size:15pt;margin:0">特定技能候補者 性格診断結果</h1>
@@ -172,7 +158,7 @@ function printResult(r){
       </div>
     </div>
     <div style="background:#f5f7ff;border:1px solid #dce4ff;border-radius:5pt;padding:7pt 12pt;margin-bottom:10pt;display:flex;gap:20pt;flex-wrap:wrap">
-      <div><span style="color:#888;font-size:8pt">氏名</span><br><b style="font-size:13pt">${r.name}</b></div>
+      <div><span style="color:#888;font-size:8pt">氏名／番号</span><br><b style="font-size:13pt">${r.name}</b></div>
       <div><span style="color:#888;font-size:8pt">言語</span><br><b>${langInfo?.flag} ${langInfo?.label}</b></div>
       <div><span style="color:#888;font-size:8pt">回答信頼性</span><br><b style="color:${r.validity.ok?'#1a6e56':'#c07030'}">${r.validity.ok?'✅ 良好':'⚠️ 要注意'}</b></div>
     </div>
@@ -181,8 +167,8 @@ function printResult(r){
       <thead><tr style="background:#f0f4ff">${['特性','スコア','レベル','解釈'].map(h=>`<th style="padding:4pt 7pt;text-align:left;border:1px solid #dce4ff">${h}</th>`).join('')}</tr></thead>
       <tbody>${Object.entries(r.scores).map(([d,s])=>`<tr>
         <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-weight:700"><span style="color:${DIMS[d].color}">${DIMS[d].icon}</span> ${DIMS[d].ja.name}</td>
-        <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-weight:800;color:${lcPrint(s)};text-align:center">${s}点</td>
-        <td style="padding:4pt 7pt;border:1px solid #dce4ff;text-align:center;color:${lcPrint(s)};font-weight:700">${lvPrint(s)}</td>
+        <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-weight:800;color:${lcP(s)};text-align:center">${s}点</td>
+        <td style="padding:4pt 7pt;border:1px solid #dce4ff;text-align:center;color:${lcP(s)};font-weight:700">${lvP(s)}</td>
         <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-size:8pt;line-height:1.5">${interpText(d,s,'ja')}</td>
       </tr>`).join('')}</tbody>
     </table>
@@ -195,15 +181,15 @@ function printResult(r){
       <span>特定技能候補者 性格診断システム</span><span>コード：${r.code}</span>
     </div>`;
   window.print();
+  // 印刷後にタイトルを元に戻す
+  setTimeout(()=>{ document.title='管理者ダッシュボード | Tokutei Ginou'; },2000);
 }
 
-// ─── RENDER ───
 function render(){
-  const app = document.getElementById('app');
-  if (!state.authed) { app.innerHTML = renderLogin(); bindLogin(); return; }
-  if (state.detail)  { app.innerHTML = renderDetail(state.detail); bindDetail(); return; }
-  app.innerHTML = renderDashboard();
-  bindDashboard();
+  const app=document.getElementById('app');
+  if(!isAuthed()){app.innerHTML=renderLogin();bindLogin();return;}
+  if(state.detail){app.innerHTML=renderDetail(state.detail);bindDetail();return;}
+  app.innerHTML=renderDashboard();bindDashboard();
 }
 
 function renderLogin(){
@@ -218,58 +204,52 @@ function renderLogin(){
 }
 
 function renderDashboard(){
-  const filtered = state.results.filter(r=>{
+  const filtered=state.results.filter(r=>{
     if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
     if(state.filterV==='ok'&&!r.validity.ok)return false;
     if(state.filterV==='warn'&&r.validity.ok)return false;
     return true;
   });
-
-  const stats = [
+  const stats=[
     {l:'総受験者数',v:state.results.length,c:'#6C9BF7'},
     {l:'信頼性：良好',v:state.results.filter(r=>r.validity.ok).length,c:'#5BC8AF'},
     {l:'信頼性：要注意',v:state.results.filter(r=>!r.validity.ok).length,c:'#F4A261'},
     {l:'直近7日',v:state.results.filter(r=>Date.now()-new Date(r.date).getTime()<7*86400000).length,c:'#9B8EF7'},
   ];
-
-  const validCodes = state.codes.filter(c=>!c.used_at&&Date.now()<c.expires_at).length;
-
+  const validCodes=state.codes.filter(c=>!c.used_at&&Date.now()<c.expires_at).length;
   return `<div class="page">
-    <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
         <h1 style="font-size:22px;font-weight:800">🗂️ 管理者ダッシュボード</h1>
         <p style="color:rgba(255,255,255,0.4);margin-top:4px;font-size:12px">特定技能候補者 性格診断管理システム</p>
       </div>
-      <button class="btn btn-ghost" id="refreshBtn">${state.loading?'読み込み中…':'🔄 最新に更新'}</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="refreshBtn">${state.loading?'読み込み中…':'🔄 最新に更新'}</button>
+        <button class="btn" style="background:rgba(231,111,154,0.15);border:1px solid rgba(231,111,154,0.3);color:#E76F9A" id="logoutBtn">ログアウト</button>
+      </div>
     </div>
-
-    <!-- Tabs -->
     <div style="display:flex;gap:8px;margin-bottom:20px">
       <button class="tab-btn ${state.tab==='results'?'active':''}" data-tab="results">📊 受験結果一覧 (${state.results.length}件)</button>
       <button class="tab-btn ${state.tab==='codes'?'active':''}" data-tab="codes">🔑 コード管理 (${validCodes}件有効)</button>
     </div>
-
-    ${state.tab==='results' ? renderResultsTab(filtered, stats) : renderCodesTab()}
+    ${state.tab==='results'?renderResultsTab(filtered,stats):renderCodesTab()}
   </div>`;
 }
 
-function renderResultsTab(filtered, stats){
-  const langFilters = ['all','ja','id','my'].map(c=>{
-    const active = state.filterLang===c;
-    const label = c==='all'?'全言語':(LANGUAGES.find(l=>l.code===c)?.flag+' '+LANGUAGES.find(l=>l.code===c)?.label);
+function renderResultsTab(filtered,stats){
+  const langFilters=['all','ja','id','my'].map(c=>{
+    const active=state.filterLang===c;
+    const label=c==='all'?'全言語':(LANGUAGES.find(l=>l.code===c)?.flag+' '+LANGUAGES.find(l=>l.code===c)?.label);
     return `<button class="filter-btn ${active?'active':''}" data-flang="${c}">${label}</button>`;
   }).join('');
-
-  const vFilters = [['all','すべて'],['ok','✅ 良好'],['warn','⚠️ 要注意']].map(([v,l])=>{
-    const active = state.filterV===v;
+  const vFilters=[['all','すべて'],['ok','✅ 良好'],['warn','⚠️ 要注意']].map(([v,l])=>{
+    const active=state.filterV===v;
     return `<button class="filter-btn ${active?'active':''}" style="${active?'background:rgba(91,200,175,0.18);border-color:rgba(91,200,175,0.4);color:#5BC8AF':''}" data-fv="${v}">${l}</button>`;
   }).join('');
-
-  const rows = filtered.length===0
-    ? `<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
-    : filtered.map((r,i)=>{
-        const li = LANGUAGES.find(l=>l.code===r.lang);
+  const rows=filtered.length===0
+    ?`<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
+    :filtered.map((r,i)=>{
+        const li=LANGUAGES.find(l=>l.code===r.lang);
         return `<tr data-idx="${i}">
           <td style="font-weight:700">${r.name}</td>
           <td><span style="font-size:15px">${li?.flag}</span></td>
@@ -282,23 +262,19 @@ function renderResultsTab(filtered, stats){
           </td>
         </tr>`;
       }).join('');
-
   return `
-    <!-- Stats -->
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
       ${stats.map(s=>`<div class="glass stat-card"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('')}
     </div>
-    <!-- Filters -->
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       ${langFilters}
       <div style="width:1px;background:rgba(255,255,255,0.1);margin:0 4px;height:20px"></div>
       ${vFilters}
     </div>
-    <!-- Table -->
     <div class="glass" style="overflow-x:auto">
       <table>
         <thead><tr>
-          <th>氏名/メモ</th><th>言語</th><th>受験日時</th><th>信頼性</th>
+          <th>氏名／番号</th><th>言語</th><th>受験日時</th><th>信頼性</th>
           <th>開放</th><th>誠実</th><th>外向</th><th>協調</th><th>神経</th><th>詳細/PDF</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -307,19 +283,15 @@ function renderResultsTab(filtered, stats){
 }
 
 function renderCodesTab(){
-  const rows = state.codes.length===0
-    ? `<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
-    : state.codes.map((c,i)=>{
-        const li = LANGUAGES.find(l=>l.code===c.lang);
-        const expired = Date.now()>c.expires_at, used = !!c.used_at;
-        const st = used?'used':expired?'expired':'active';
-        const stStyle = {
-          active: {bg:'rgba(91,200,175,0.12)',col:'#5BC8AF',label:'✅ 有効'},
-          used:   {bg:'rgba(155,142,247,0.12)',col:'#9B8EF7',label:'✔ 使用済'},
-          expired:{bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)',label:'⏰ 期限切れ'},
-        }[st];
-        const copyBtn = st==='active'
-          ? `<button class="btn-sm" style="background:${state.copyMsg[c.code]?'rgba(91,200,175,0.15)':'rgba(108,155,247,0.15)'};border-color:${state.copyMsg[c.code]?'rgba(91,200,175,0.3)':'rgba(108,155,247,0.3)'};color:${state.copyMsg[c.code]?'#5BC8AF':'#6C9BF7'}" data-copy="${c.code}">${state.copyMsg[c.code]?'✓ コピー済':'コピー'}</button>` : '';
+  const rows=state.codes.length===0
+    ?`<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
+    :state.codes.map((c,i)=>{
+        const li=LANGUAGES.find(l=>l.code===c.lang);
+        const expired=Date.now()>c.expires_at,used=!!c.used_at;
+        const st=used?'used':expired?'expired':'active';
+        const stStyle={active:{bg:'rgba(91,200,175,0.12)',col:'#5BC8AF',label:'✅ 有効'},used:{bg:'rgba(155,142,247,0.12)',col:'#9B8EF7',label:'✔ 使用済'},expired:{bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)',label:'⏰ 期限切れ'}}[st];
+        const copyBtn=st==='active'
+          ?`<button class="btn-sm" style="background:${state.copyMsg[c.code]?'rgba(91,200,175,0.15)':'rgba(108,155,247,0.15)'};border-color:${state.copyMsg[c.code]?'rgba(91,200,175,0.3)':'rgba(108,155,247,0.3)'};color:${state.copyMsg[c.code]?'#5BC8AF':'#6C9BF7'}" data-copy="${c.code}">${state.copyMsg[c.code]?'✓ コピー済':'コピー'}</button>`:'';
         return `<tr style="opacity:${st!=='active'?0.55:1}">
           <td style="font-family:monospace;font-weight:700;letter-spacing:1px;font-size:13px">${c.code}</td>
           <td><span style="font-size:15px">${li?.flag}</span> <span style="color:rgba(255,255,255,0.4);font-size:11px">${li?.label}</span></td>
@@ -331,13 +303,11 @@ function renderCodesTab(){
           <td><button class="btn-sm" style="background:rgba(231,111,154,0.1);border-color:rgba(231,111,154,0.22);color:#E76F9A" data-delete="${c.code}">削除</button></td>
         </tr>`;
       }).join('');
-
   return `
-    <!-- Issue new code -->
     <div class="glass" style="padding:20px;margin-bottom:14px">
       <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">🔑 新規コード発行</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <select id="newLangSel" style="padding:9px 12px">
+        <select id="newLangSel">
           ${LANGUAGES.map(l=>`<option value="${l.code}" ${state.newLang===l.code?'selected':''}>${l.flag} ${l.label}</option>`).join('')}
         </select>
         <input id="newNoteInput" placeholder="メモ（候補者名など・任意）" style="flex:1;min-width:160px" value="${state.newNote}">
@@ -345,7 +315,6 @@ function renderCodesTab(){
       </div>
       <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">コードは発行から24時間有効・1回のみ使用可能です。</p>
     </div>
-    <!-- Code list -->
     <div class="glass" style="overflow-x:auto">
       <table>
         <thead><tr>
@@ -357,9 +326,9 @@ function renderCodesTab(){
 }
 
 function renderDetail(r){
-  const li = LANGUAGES.find(l=>l.code===r.lang);
-  const qs = generateIQs(r.scores);
-  const scoreRows = Object.entries(r.scores).map(([d,s])=>`
+  const li=LANGUAGES.find(l=>l.code===r.lang);
+  const qs=generateIQs(r.scores);
+  const scoreRows=Object.entries(r.scores).map(([d,s])=>`
     <div style="margin-bottom:9px">
       <div style="display:flex;justify-content:space-between;margin-bottom:3px">
         <span style="color:${DIMS[d].color};font-weight:700;font-size:12px">${DIMS[d].icon} ${DIMS[d].ja.name}</span>
@@ -369,19 +338,16 @@ function renderDetail(r){
         <div style="width:${s}%;height:100%;background:linear-gradient(90deg,${DIMS[d].color}55,${DIMS[d].color});border-radius:4px"></div>
       </div>
     </div>`).join('');
-
-  const interpColLang = Object.entries(r.scores).map(([d,s])=>`
+  const interpColLang=Object.entries(r.scores).map(([d,s])=>`
     <div style="margin-bottom:10px">
       <span style="color:${DIMS[d].color};font-weight:700;font-size:12px">${DIMS[d].icon} ${DIMS[d][r.lang].name}</span>
       <p style="color:rgba(255,255,255,0.6);font-size:11px;margin:3px 0 0;line-height:1.6">${interpText(d,s,r.lang)}</p>
     </div>`).join('');
-
-  const interpColJa = Object.entries(r.scores).map(([d,s])=>`
+  const interpColJa=Object.entries(r.scores).map(([d,s])=>`
     <div style="margin-bottom:10px">
       <span style="color:${DIMS[d].color};font-weight:700;font-size:12px">${DIMS[d].icon} ${DIMS[d].ja.name}</span>
       <p style="color:rgba(255,255,255,0.6);font-size:11px;margin:3px 0 0;line-height:1.6">${interpText(d,s,'ja')}</p>
     </div>`).join('');
-
   return `<div class="page">
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
       <button class="btn btn-ghost" id="backBtn">← 一覧へ</button>
@@ -390,11 +356,7 @@ function renderDetail(r){
       <span class="badge" style="background:${r.validity.ok?'rgba(91,200,175,0.15)':'rgba(247,152,97,0.15)'};color:${r.validity.ok?'#5BC8AF':'#F4A261'}">${r.validity.ok?'✅ 信頼性：良好':'⚠️ 信頼性：要注意'}</span>
       <button class="btn btn-green" id="printBtn" style="margin-left:auto">🖨️ PDF出力</button>
     </div>
-
-    <!-- Score bars -->
     <div class="glass" style="padding:24px;margin-bottom:14px">${scoreRows}</div>
-
-    <!-- Two columns -->
     <div style="display:flex;gap:12px;flex-wrap:wrap">
       <div class="glass" style="padding:18px;flex:1;min-width:260px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.07)">
@@ -420,76 +382,48 @@ function renderDetail(r){
   </div>`;
 }
 
-// ─── BIND EVENTS ───
 function bindLogin(){
-  document.getElementById('loginBtn')?.addEventListener('click', ()=>{
-    const pw = document.getElementById('pwInput')?.value;
-    if(pw===ADMIN_PASSWORD){ state.authed=true; state.pwErr=false; loadAll(); }
-    else { state.pwErr=true; render(); }
+  document.getElementById('loginBtn')?.addEventListener('click',()=>{
+    const pw=document.getElementById('pwInput')?.value;
+    if(pw===ADMIN_PASSWORD){setAuthed(true);state.pwErr=false;loadAll();}
+    else{state.pwErr=true;render();}
   });
-  document.getElementById('pwInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginBtn')?.click(); });
+  document.getElementById('pwInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn')?.click();});
 }
 
 function bindDashboard(){
-  document.getElementById('refreshBtn')?.addEventListener('click', loadAll);
-
-  // Tabs
-  document.querySelectorAll('[data-tab]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ state.tab=btn.dataset.tab; render(); });
-  });
-
-  // Lang filters
-  document.querySelectorAll('[data-flang]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ state.filterLang=btn.dataset.flang; render(); });
-  });
-
-  // Validity filters
-  document.querySelectorAll('[data-fv]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ state.filterV=btn.dataset.fv; render(); });
-  });
-
-  // Detail
-  document.querySelectorAll('[data-detail]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ state.detail=state.results[parseInt(btn.dataset.detail)]; render(); });
-  });
-
-  // Print
-  document.querySelectorAll('[data-print]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ printResult(state.results[parseInt(btn.dataset.print)]); });
-  });
-
-  // Add code
-  document.getElementById('addCodeBtn')?.addEventListener('click', ()=>{
-    state.newLang = document.getElementById('newLangSel')?.value || 'id';
-    state.newNote = document.getElementById('newNoteInput')?.value || '';
+  document.getElementById('refreshBtn')?.addEventListener('click',loadAll);
+  document.getElementById('logoutBtn')?.addEventListener('click',()=>{setAuthed(false);render();});
+  document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{state.tab=btn.dataset.tab;render();}));
+  document.querySelectorAll('[data-flang]').forEach(btn=>btn.addEventListener('click',()=>{state.filterLang=btn.dataset.flang;render();}));
+  document.querySelectorAll('[data-fv]').forEach(btn=>btn.addEventListener('click',()=>{state.filterV=btn.dataset.fv;render();}));
+  document.querySelectorAll('[data-detail]').forEach(btn=>btn.addEventListener('click',()=>{state.detail=state.results[parseInt(btn.dataset.detail)];render();}));
+  document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>{printResult(state.results[parseInt(btn.dataset.print)]);}));
+  document.getElementById('addCodeBtn')?.addEventListener('click',()=>{
+    state.newLang=document.getElementById('newLangSel')?.value||'id';
+    state.newNote=document.getElementById('newNoteInput')?.value||'';
     addCode();
   });
-  document.getElementById('newNoteInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('addCodeBtn')?.click(); });
-  document.getElementById('newLangSel')?.addEventListener('change', e=>{ state.newLang=e.target.value; });
-
-  // Copy
+  document.getElementById('newNoteInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('addCodeBtn')?.click();});
+  document.getElementById('newLangSel')?.addEventListener('change',e=>{state.newLang=e.target.value;});
   document.querySelectorAll('[data-copy]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const code = btn.dataset.copy;
+    btn.addEventListener('click',()=>{
+      const code=btn.dataset.copy;
       navigator.clipboard?.writeText(code);
-      state.copyMsg[code] = true;
-      render();
-      setTimeout(()=>{ state.copyMsg[code]=false; render(); }, 1500);
+      state.copyMsg[code]=true; render();
+      setTimeout(()=>{state.copyMsg[code]=false;render();},1500);
     });
   });
-
-  // Delete
-  document.querySelectorAll('[data-delete]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ deleteCode(btn.dataset.delete); });
-  });
+  document.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',()=>{deleteCode(btn.dataset.delete);}));
 }
 
 function bindDetail(){
-  document.getElementById('backBtn')?.addEventListener('click', ()=>{ state.detail=null; render(); });
-  document.getElementById('printBtn')?.addEventListener('click', ()=>{ printResult(state.detail); });
+  document.getElementById('backBtn')?.addEventListener('click',()=>{state.detail=null;render();});
+  document.getElementById('printBtn')?.addEventListener('click',()=>{printResult(state.detail);});
 }
 
-render();
+// ★ 起動時にログイン済みなら自動でデータ読み込み
+if(isAuthed()) loadAll(); else render();
 </script>
 </body>
 </html>
