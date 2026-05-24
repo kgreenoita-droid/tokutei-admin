@@ -30,7 +30,7 @@ td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); }
 .tab-btn.active { background:rgba(108,155,247,0.22); border-color:rgba(108,155,247,0.45); color:#6C9BF7; }
 .filter-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); border-radius:7px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
 .filter-btn.active { background:rgba(108,155,247,0.22); border-color:rgba(108,155,247,0.45); color:#6C9BF7; }
-.stat-card { padding:12px 18px; text-align:center; flex:1; min-width:120px; }
+.stat-card { padding:12px 18px; text-align:center; flex:1; min-width:100px; }
 .stat-val { font-weight:800; font-size:22px; margin-bottom:2px; }
 .stat-lbl { color:rgba(255,255,255,0.4); font-size:11px; }
 @media print {
@@ -53,7 +53,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const ADMIN_PASSWORD = 'admin1234';
 // ═══════════════════════════════════════════
 
-const CODE_EXPIRY_MS = 24*60*60*1000;
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const LANGUAGES = [
@@ -85,6 +84,18 @@ function fmtShort(dt){return new Date(dt).toLocaleString('ja-JP',{month:'2-digit
 function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const s=n=>Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');return `${s(4)}-${s(4)}-${s(4)}`;}
 function lv(s){return s>=70?'高':s>=40?'中':'低';}
 function lc(s){return s>=70?'#5BC8AF':s>=40?'#F4A261':'#9B8EF7';}
+
+// ★ 信頼性4段階
+function validityStyle(v){
+  if(!v) return {label:'—',bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)'};
+  const level=v.level||(v.ok?'good':'alert');
+  return {
+    high:   {label:'◎ 高い',     bg:'rgba(91,200,175,0.15)',  col:'#5BC8AF'},
+    good:   {label:'○ 良好',     bg:'rgba(108,155,247,0.15)', col:'#6C9BF7'},
+    caution:{label:'△ やや注意', bg:'rgba(244,162,97,0.15)',  col:'#F4A261'},
+    alert:  {label:'× 要注意',   bg:'rgba(231,111,154,0.15)', col:'#E76F9A'},
+  }[level]||{label:'—',bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)'};
+}
 
 function generateIQs(scores){
   const {O,C,E,A,N}=scores,qs=[];
@@ -123,7 +134,9 @@ async function loadAll(){
 }
 
 async function addCode(){
-  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:Date.now()+CODE_EXPIRY_MS};
+  // ★ expires_at を100年後に設定（事実上無期限）
+  const farFuture = Date.now() + (100 * 365 * 24 * 60 * 60 * 1000);
+  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:farFuture};
   await sb.from('codes').insert(c);
   state.newNote=''; await loadAll();
 }
@@ -137,6 +150,7 @@ function printResult(r){
   const qs=generateIQs(r.scores);
   const lcP=s=>s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
   const lvP=s=>s>=70?'高':s>=40?'中':'低';
+  const vs=validityStyle(r.validity);
   const fileName=`${r.name}_性格診断結果`;
   document.title=fileName;
   document.getElementById('printArea').innerHTML=`
@@ -152,7 +166,7 @@ function printResult(r){
     <div style="background:#f5f7ff;border:1px solid #dce4ff;border-radius:5pt;padding:7pt 12pt;margin-bottom:10pt;display:flex;gap:20pt;flex-wrap:wrap">
       <div><span style="color:#888;font-size:8pt">氏名／番号</span><br><b style="font-size:13pt">${r.name}</b></div>
       <div><span style="color:#888;font-size:8pt">言語</span><br><b>${langInfo?.flag} ${langInfo?.label}</b></div>
-      <div><span style="color:#888;font-size:8pt">回答信頼性</span><br><b style="color:${r.validity.ok?'#1a6e56':'#c07030'}">${r.validity.ok?'✅ 良好':'⚠️ 要注意'}</b></div>
+      <div><span style="color:#888;font-size:8pt">回答信頼性</span><br><b style="color:${vs.col}">${vs.label}</b></div>
     </div>
     <h2 style="font-size:10pt;margin:0 0 6pt;border-left:3pt solid #6C9BF7;padding-left:6pt">診断スコア</h2>
     <table style="width:100%;border-collapse:collapse;margin-bottom:10pt;font-size:8.5pt">
@@ -168,7 +182,7 @@ function printResult(r){
     <div style="background:#f5fff9;border:1px solid #b8e8d8;border-radius:5pt;padding:7pt 11pt;margin-bottom:10pt;font-size:8.5pt">${overallComment(r.scores)}</div>
     <h2 style="font-size:10pt;margin:0 0 5pt;border-left:3pt solid #F4A261;padding-left:6pt">面接での推奨質問</h2>
     <ol style="margin:0;padding-left:14pt;font-size:8.5pt">${qs.map(q=>`<li style="margin-bottom:3pt">${q}</li>`).join('')}</ol>
-    ${!r.validity.ok?`<div style="margin-top:10pt;background:#fff8f0;border:1px solid #f4c87a;border-radius:5pt;padding:7pt 11pt;font-size:8.5pt"><b style="color:#c07030">⚠️ 回答信頼性：</b>実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
+    ${!r.validity?.ok?`<div style="margin-top:10pt;background:#fff8f0;border:1px solid #f4c87a;border-radius:5pt;padding:7pt 11pt;font-size:8.5pt"><b style="color:#c07030">⚠️ 回答信頼性（${vs.label}）：</b>一部の回答パターンから、実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
     <div style="margin-top:14pt;padding-top:6pt;border-top:1px solid #ddd;font-size:7.5pt;color:#aaa;display:flex;justify-content:space-between">
       <span>候補者 性格診断システム — Tokutei Ginou</span><span>コード：${r.code}</span>
     </div>`;
@@ -197,17 +211,17 @@ function renderLogin(){
 function renderDashboard(){
   const filtered=state.results.filter(r=>{
     if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
-    if(state.filterV==='ok'&&!r.validity.ok)return false;
-    if(state.filterV==='warn'&&r.validity.ok)return false;
+    if(state.filterV==='ok'&&!r.validity?.ok)return false;
+    if(state.filterV==='warn'&&r.validity?.ok)return false;
     return true;
   });
   const stats=[
     {l:'総受験者数',v:state.results.length,c:'#6C9BF7'},
-    {l:'信頼性：良好',v:state.results.filter(r=>r.validity.ok).length,c:'#5BC8AF'},
-    {l:'信頼性：要注意',v:state.results.filter(r=>!r.validity.ok).length,c:'#F4A261'},
-    {l:'直近7日',v:state.results.filter(r=>Date.now()-new Date(r.date).getTime()<7*86400000).length,c:'#9B8EF7'},
+    {l:'◎ 高い',v:state.results.filter(r=>r.validity?.level==='high').length,c:'#5BC8AF'},
+    {l:'○ 良好',v:state.results.filter(r=>r.validity?.level==='good').length,c:'#6C9BF7'},
+    {l:'△ やや注意',v:state.results.filter(r=>r.validity?.level==='caution').length,c:'#F4A261'},
+    {l:'× 要注意',v:state.results.filter(r=>r.validity?.level==='alert').length,c:'#E76F9A'},
   ];
-  const validCodes=state.codes.filter(c=>Date.now()<c.expires_at).length;
   return `<div class="page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
@@ -221,7 +235,7 @@ function renderDashboard(){
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
       <button class="tab-btn ${state.tab==='results'?'active':''}" data-tab="results">📊 受験結果一覧 (${state.results.length}件)</button>
-      <button class="tab-btn ${state.tab==='codes'?'active':''}" data-tab="codes">🔑 コード管理 (${validCodes}件有効)</button>
+      <button class="tab-btn ${state.tab==='codes'?'active':''}" data-tab="codes">🔑 コード管理 (${state.codes.length}件)</button>
     </div>
     ${state.tab==='results'?renderResultsTab(filtered,stats):renderCodesTab()}
   </div>`;
@@ -233,19 +247,20 @@ function renderResultsTab(filtered,stats){
     const label=c==='all'?'全言語':(LANGUAGES.find(l=>l.code===c)?.flag+' '+LANGUAGES.find(l=>l.code===c)?.label);
     return `<button class="filter-btn ${active?'active':''}" data-flang="${c}">${label}</button>`;
   }).join('');
-  const vFilters=[['all','すべて'],['ok','✅ 良好'],['warn','⚠️ 要注意']].map(([v,l])=>{
+  const vFilters=[['all','すべて'],['ok','信頼性OK'],['warn','要注意']].map(([v,l])=>{
     const active=state.filterV===v;
-    return `<button class="filter-btn ${active?'active':''}" style="${active?'background:rgba(91,200,175,0.18);border-color:rgba(91,200,175,0.4);color:#5BC8AF':''}" data-fv="${v}">${l}</button>`;
+    return `<button class="filter-btn ${active?'active':''}" data-fv="${v}">${l}</button>`;
   }).join('');
   const rows=filtered.length===0
     ?`<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
     :filtered.map((r,i)=>{
         const li=LANGUAGES.find(l=>l.code===r.lang);
+        const vs=validityStyle(r.validity);
         return `<tr>
           <td style="font-weight:700">${r.name}</td>
           <td><span style="font-size:15px">${li?.flag}</span></td>
           <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${fmt(r.date)}</td>
-          <td><span class="badge" style="background:${r.validity.ok?'rgba(91,200,175,0.12)':'rgba(247,152,97,0.12)'};color:${r.validity.ok?'#5BC8AF':'#F4A261'}">${r.validity.ok?'✅':'⚠️'}</span></td>
+          <td><span class="badge" style="background:${vs.bg};color:${vs.col}">${vs.label}</span></td>
           ${Object.entries(r.scores).map(([d,s])=>`<td style="text-align:center;color:${lc(s)};font-weight:800;font-size:13px">${s}</td>`).join('')}
           <td style="white-space:nowrap">
             <button class="btn-sm" style="background:rgba(108,155,247,0.18);border-color:rgba(108,155,247,0.3);color:#6C9BF7;margin-right:4px" data-detail="${i}">詳細</button>
@@ -278,20 +293,12 @@ function renderCodesTab(){
     ?`<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
     :state.codes.map((c,i)=>{
         const li=LANGUAGES.find(l=>l.code===c.lang);
-        // ★ 有効期限のみで判定（使用済みなし）
-        const expired=Date.now()>c.expires_at;
-        const stStyle=expired
-          ?{bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)',label:'⏰ 期限切れ'}
-          :{bg:'rgba(91,200,175,0.12)',col:'#5BC8AF',label:'✅ 有効'};
-        const copyBtn=!expired
-          ?`<button class="btn-sm" style="background:${state.copyMsg[c.code]?'rgba(91,200,175,0.15)':'rgba(108,155,247,0.15)'};border-color:${state.copyMsg[c.code]?'rgba(91,200,175,0.3)':'rgba(108,155,247,0.3)'};color:${state.copyMsg[c.code]?'#5BC8AF':'#6C9BF7'}" data-copy="${c.code}">${state.copyMsg[c.code]?'✓ コピー済':'コピー'}</button>`:'';
-        return `<tr style="opacity:${expired?0.55:1}">
+        const copyBtn=`<button class="btn-sm" style="background:${state.copyMsg[c.code]?'rgba(91,200,175,0.15)':'rgba(108,155,247,0.15)'};border-color:${state.copyMsg[c.code]?'rgba(91,200,175,0.3)':'rgba(108,155,247,0.3)'};color:${state.copyMsg[c.code]?'#5BC8AF':'#6C9BF7'}" data-copy="${c.code}">${state.copyMsg[c.code]?'✓ コピー済':'コピー'}</button>`;
+        return `<tr>
           <td style="font-family:monospace;font-weight:700;letter-spacing:1px;font-size:13px">${c.code}</td>
           <td><span style="font-size:15px">${li?.flag}</span> <span style="color:rgba(255,255,255,0.4);font-size:11px">${li?.label}</span></td>
           <td style="color:rgba(255,255,255,0.6);font-size:12px">${c.note||'—'}</td>
           <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${fmtShort(c.created_at)}</td>
-          <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${fmtShort(c.expires_at)}</td>
-          <td><span class="badge" style="background:${stStyle.bg};color:${stStyle.col}">${stStyle.label}</span></td>
           <td>${copyBtn}</td>
           <td><button class="btn-sm" style="background:rgba(231,111,154,0.1);border-color:rgba(231,111,154,0.22);color:#E76F9A" data-delete="${c.code}">削除</button></td>
         </tr>`;
@@ -306,12 +313,12 @@ function renderCodesTab(){
         <input id="newNoteInput" placeholder="メモ（任意）" style="flex:1;min-width:160px" value="${state.newNote}">
         <button class="btn btn-green" id="addCodeBtn">＋ 発行する</button>
       </div>
-      <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">コードは発行から24時間有効です。同じコードで何人でも受験できます。</p>
+      <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">コードは削除するまで有効です。同じコードで何人でも受験できます。</p>
     </div>
     <div class="glass" style="overflow-x:auto">
       <table>
         <thead><tr>
-          <th>コード</th><th>言語</th><th>メモ</th><th>発行日時</th><th>有効期限</th><th>状態</th><th>コピー</th><th>削除</th>
+          <th>コード</th><th>言語</th><th>メモ</th><th>発行日時</th><th>コピー</th><th>削除</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -321,6 +328,7 @@ function renderCodesTab(){
 function renderDetail(r){
   const li=LANGUAGES.find(l=>l.code===r.lang);
   const qs=generateIQs(r.scores);
+  const vs=validityStyle(r.validity);
   const scoreRows=Object.entries(r.scores).map(([d,s])=>`
     <div style="margin-bottom:9px">
       <div style="display:flex;justify-content:space-between;margin-bottom:3px">
@@ -346,7 +354,7 @@ function renderDetail(r){
       <button class="btn btn-ghost" id="backBtn">← 一覧へ</button>
       <h2 style="font-size:18px;font-weight:800">${li?.flag} ${r.name}</h2>
       <span style="color:rgba(255,255,255,0.4);font-size:12px">${fmt(r.date)}</span>
-      <span class="badge" style="background:${r.validity.ok?'rgba(91,200,175,0.15)':'rgba(247,152,97,0.15)'};color:${r.validity.ok?'#5BC8AF':'#F4A261'}">${r.validity.ok?'✅ 信頼性：良好':'⚠️ 信頼性：要注意'}</span>
+      <span class="badge" style="background:${vs.bg};color:${vs.col}">信頼性：${vs.label}</span>
       <button class="btn btn-green" id="printBtn" style="margin-left:auto">🖨️ PDF出力</button>
     </div>
     <div class="glass" style="padding:24px;margin-bottom:14px">${scoreRows}</div>
