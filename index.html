@@ -67,23 +67,30 @@ const LANGUAGES = [
 ];
 
 const DIMS = {
-  O:{icon:'✦',color:'#6C9BF7',ja:{name:'開放性',desc:'新しい経験・アイデアへの好奇心や創造性'},id:{name:'Keterbukaan',desc:'Rasa ingin tahu dan kreativitas'},my:{name:'ဖွင့်လှစ်မှု',desc:'အတွေ့အကြုံအသစ်နှင့် စိတ်ကူးစိတ်သန်းများအပေါ် စူးစမ်းလိုစိတ်'}},
-  C:{icon:'◈',color:'#5BC8AF',ja:{name:'誠実性',desc:'責任感・計画性・自己規律'},id:{name:'Ketelitian',desc:'Tanggung jawab, perencanaan, disiplin diri'},my:{name:'လိုက်နာမှု',desc:'တာဝန်ယူမှု၊ စီစဉ်ဆောင်ရွက်မှုနှင့် မိမိကိုယ်ကို စည်းကမ်းထိန်းသိမ်းမှု'}},
-  E:{icon:'◉',color:'#F4A261',ja:{name:'外向性',desc:'社交性・活動性・自己主張'},id:{name:'Ekstraversi',desc:'Kemampuan bersosialisasi, semangat, ketegasan diri'},my:{name:'ပြင်ပလှည့်မှု',desc:'လူမှုဆက်ဆံရေး၊ တက်ကြွမှုနှင့် မိမိကိုင်းကျမှု'}},
-  A:{icon:'❋',color:'#E76F9A',ja:{name:'協調性',desc:'思いやり・協力・信頼性'},id:{name:'Keramahan',desc:'Empati, kerja sama, kepercayaan'},my:{name:'ပူးပေါင်းဆောင်ရွက်မှု',desc:'စာနာမှု၊ ပူးပေါင်းဆောင်ရွက်မှုနှင့် ယုံကြည်စိတ်ချမှု'}},
-  N:{icon:'◎',color:'#9B8EF7',ja:{name:'神経症傾向',desc:'感情の不安定さ・ストレスへの敏感さ（低いほど安定）'},id:{name:'Neurotisisme',desc:'Ketidakstabilan emosi dan sensitivitas stres (skor rendah = stabil)'},my:{name:'စိတ်မငြိမ်မသက်မှု',desc:'စိတ်ခံစားချက် မတည်ငြိမ်မှုနှင့် စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်မှု'}},
+  O:{icon:'✦',color:'#6C9BF7',ja:{name:'開放性'},id:{name:'Keterbukaan'},my:{name:'ဖွင့်လှစ်မှု'}},
+  C:{icon:'◈',color:'#5BC8AF',ja:{name:'誠実性'},id:{name:'Ketelitian'},my:{name:'လိုက်နာမှု'}},
+  E:{icon:'◉',color:'#F4A261',ja:{name:'外向性'},id:{name:'Ekstraversi'},my:{name:'ပြင်ပလှည့်မှု'}},
+  A:{icon:'❋',color:'#E76F9A',ja:{name:'協調性'},id:{name:'Keramahan'},my:{name:'ပူးပေါင်းဆောင်ရွက်မှု'}},
+  N:{icon:'◎',color:'#9B8EF7',ja:{name:'神経症傾向'},id:{name:'Neurotisisme'},my:{name:'စိတ်မငြိမ်မသက်မှု'}},
 };
 
 const INTERP = {
-  O:{ja:{high:'新しい技術・業務への適応力が高く、変化する職場でも積極的に学べます。',mid:'慣れた環境では安定して働けますが、必要に応じて新しいことにも取り組めます。',low:'手順通りに着実に仕事を進めるタイプです。定型業務での安定したパフォーマンスが期待できます。'},id:{high:'Kemampuan adaptasi tinggi terhadap teknologi dan tugas baru.',mid:'Bekerja stabil di lingkungan yang familiar, namun bisa menghadapi hal baru.',low:'Tipe bekerja teratur sesuai prosedur.'},my:{high:'နည်းပညာနှင့် တာဝန်အသစ်တို့ကို လိုက်လျောညီထွေဖြစ်နိုင်မှု မြင့်မားသည်။',mid:'ကျွမ်းဝင်သောပတ်ဝန်းကျင်တွင် တည်ငြိမ်စွာ လုပ်ဆောင်နိုင်သည်။',low:'သတ်မှတ်ထားသောလုပ်ငန်းစဉ်အတိုင်း တိကျစွာ ဆောင်ရွက်သောအမျိုးအစားဖြစ်သည်။'}},
-  C:{ja:{high:'責任感が強く、自己管理能力に優れています。特定技能の現場でも安心して任せられます。',mid:'基本的な業務は誠実にこなせます。明確な指示があるとより力を発揮します。',low:'指示やフォローアップが必要な場面があります。構造化されたサポートが有効です。'},id:{high:'Rasa tanggung jawab kuat dan kemampuan manajemen diri baik.',mid:'Dapat menyelesaikan tugas dasar dengan jujur.',low:'Mungkin memerlukan instruksi dan tindak lanjut.'},my:{high:'တာဝန်ယူမှုခံစားချက် ပြင်းထန်ပြီး မိမိကိုယ်ကို စီမံခန့်ခွဲနိုင်မှု ထူးချွန်သည်။',mid:'အခြေခံတာဝန်များကို ရိုးသားစွာ ဆောင်ရွက်နိုင်သည်။',low:'ညွှန်ကြားချက်နှင့် ဆက်လက်ကူညီမှု လိုအပ်သောအချိန်များ ရှိနိုင်သည်။'}},
-  E:{ja:{high:'積極的でコミュニケーション能力が高く、チームの雰囲気を明るくします。',mid:'状況に応じて積極的にも控えめにもなれるバランス型です。',low:'慎重で落ち着いた性格です。個人作業や専門業務で力を発揮します。'},id:{high:'Aktif dan komunikatif, dapat mencerahkan suasana tim.',mid:'Tipe seimbang yang bisa aktif atau pendiam sesuai situasi.',low:'Karakter hati-hati dan tenang.'},my:{high:'တက်ကြွပြီး ဆက်သွယ်ရေးစွမ်းရည် မြင့်မားသည်။',mid:'အခြေအနေပေါ်မူတည်၍ မျှတသောပုံစံ။',low:'သတိကြီးပြီး တည်ငြိမ်သောကိုယ်ရည်ကိုယ်သွေး ရှိသည်။'}},
-  A:{ja:{high:'思いやりがあり、チームワークに優れています。日本の職場文化に馴染みやすいタイプです。',mid:'協調性はありますが、自分の意見もしっかり持っています。',low:'自己主張が強い面があります。役割と期待値を明確にすることで力を発揮します。'},id:{high:'Penuh empati dan unggul dalam kerja tim.',mid:'Memiliki kemampuan kerja sama namun juga memiliki pendapat sendiri.',low:'Cenderung tegas.'},my:{high:'စာနာမှုရှိပြီး အဖွဲ့လုပ်ငန်းတွင် ထူးချွန်သည်။',mid:'ပူးပေါင်းဆောင်ရွက်မှုစွမ်းရည် ရှိသော်လည်း မိမိ၏ မြင်ကွင်းကိုလည်း ကိုင်ဆောင်ထားသည်။',low:'မိမိကိုင်းကျမှု ပြင်းထန်သောဘက်ရှိသည်။'}},
-  N:{ja:{high:'ストレスに敏感な面があります。サポート体制や丁寧なコミュニケーションが助けになります。',mid:'感情の波はありますが、対処能力も持っています。',low:'感情が安定しており、プレッシャーの多い現場でも冷静に対応できます。'},id:{high:'Cukup sensitif terhadap stres.',mid:'Ada naik turun emosi namun memiliki kemampuan untuk mengatasinya.',low:'Emosi stabil dan dapat menghadapi tekanan dengan tenang.'},my:{high:'စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်သောဘက်ရှိသည်။',mid:'ခံစားချက်တက်ကျမှု ရှိသော်လည်း ကိုင်တွယ်ဖြေရှင်းနိုင်မှုစွမ်းရည်လည်း ရှိသည်။',low:'ခံစားချက်များ တည်ငြိမ်ပြီး ဖိစီးမှုများသောလုပ်ငန်းခွင်တွင်လည်း တည်ငြိမ်စွာ ကိုင်တွယ်နိုင်သည်။'}},
+  O:{ja:{high:'新しい技術・業務への適応力が高く、変化する職場でも積極的に学べます。',mid:'慣れた環境では安定して働けますが、必要に応じて新しいことにも取り組めます。',low:'手順通りに着実に仕事を進めるタイプです。定型業務での安定したパフォーマンスが期待できます。'},id:{high:'Kemampuan adaptasi tinggi.',mid:'Bekerja stabil di lingkungan familiar.',low:'Tipe bekerja teratur sesuai prosedur.'},my:{high:'လိုက်လျောညီထွေဖြစ်နိုင်မှု မြင့်မားသည်။',mid:'တည်ငြိမ်စွာ လုပ်ဆောင်နိုင်သည်။',low:'တိကျစွာ ဆောင်ရွက်သောအမျိုးအစားဖြစ်သည်။'}},
+  C:{ja:{high:'責任感が強く、自己管理能力に優れています。特定技能の現場でも安心して任せられます。',mid:'基本的な業務は誠実にこなせます。明確な指示があるとより力を発揮します。',low:'指示やフォローアップが必要な場面があります。構造化されたサポートが有効です。'},id:{high:'Rasa tanggung jawab kuat.',mid:'Dapat menyelesaikan tugas dasar.',low:'Mungkin memerlukan instruksi.'},my:{high:'တာဝန်ယူမှုခံစားချက် ပြင်းထန်သည်။',mid:'အခြေခံတာဝန်များကို ဆောင်ရွက်နိုင်သည်။',low:'ညွှန်ကြားချက် လိုအပ်သောအချိန်များ ရှိနိုင်သည်။'}},
+  E:{ja:{high:'積極的でコミュニケーション能力が高く、チームの雰囲気を明るくします。',mid:'状況に応じて積極的にも控えめにもなれるバランス型です。',low:'慎重で落ち着いた性格です。個人作業や専門業務で力を発揮します。'},id:{high:'Aktif dan komunikatif.',mid:'Tipe seimbang.',low:'Karakter hati-hati dan tenang.'},my:{high:'တက်ကြွပြီး ဆက်သွယ်ရေးစွမ်းရည် မြင့်မားသည်။',mid:'မျှတသောပုံစံ။',low:'သတိကြီးပြီး တည်ငြိမ်သည်။'}},
+  A:{ja:{high:'思いやりがあり、チームワークに優れています。日本の職場文化に馴染みやすいタイプです。',mid:'協調性はありますが、自分の意見もしっかり持っています。',low:'自己主張が強い面があります。役割と期待値を明確にすることで力を発揮します。'},id:{high:'Penuh empati dan unggul dalam kerja tim.',mid:'Memiliki kemampuan kerja sama.',low:'Cenderung tegas.'},my:{high:'စာနာမှုရှိပြီး အဖွဲ့လုပ်ငန်းတွင် ထူးချွန်သည်။',mid:'ပူးပေါင်းဆောင်ရွက်မှုစွမ်းရည် ရှိသည်။',low:'မိမိကိုင်းကျမှု ပြင်းထန်သောဘက်ရှိသည်။'}},
+  N:{ja:{high:'ストレスに敏感な面があります。サポート体制や丁寧なコミュニケーションが助けになります。',mid:'感情の波はありますが、対処能力も持っています。',low:'感情が安定しており、プレッシャーの多い現場でも冷静に対応できます。'},id:{high:'Cukup sensitif terhadap stres.',mid:'Ada naik turun emosi.',low:'Emosi stabil.'},my:{high:'စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်သောဘက်ရှိသည်။',mid:'ခံစားချက်တက်ကျမှု ရှိသည်။',low:'ခံစားချက်များ တည်ငြိမ်သည်။'}},
 };
 
-// 6人分の色（比較レーダー用）
-const GROUP_COLORS = ['#6C9BF7','#5BC8AF','#F4A261','#E76F9A','#9B8EF7','#F7C948'];
+// ★ 6人分のはっきりした色（まとめレーダー用）
+const GROUP_COLORS = [
+  '#e63946', // 赤
+  '#1d6fa4', // 青
+  '#e0a800', // 黄色
+  '#2a9d2a', // 緑
+  '#7b2d8b', // 紫
+  '#222222', // 黒
+];
 
 function getLevel(s){return s>=70?'high':s>=40?'mid':'low';}
 function interpText(dim,s,lang){return INTERP[dim][lang][getLevel(s)];}
@@ -127,66 +134,69 @@ function overallComment(scores){
   return `この候補者は${p}タイプです。面接では「${f}」についてさらに確認することをお勧めします。`;
 }
 
-// ─── SVGレーダーチャート生成 ───
-function makeRadarSVG(scores, size, color, opacity){
+// ─── SVGレーダーチャート（個別・塗りあり）───
+function makeRadarSVG(scores, size, color){
   const keys=Object.keys(scores);
-  const cx=size/2, cy=size/2, r=size*0.35, lv=5;
+  const cx=size/2, cy=size/2, r=size*0.33, lv=5;
   const ang=i=>(2*Math.PI*i)/keys.length;
   const pt=(i,radius)=>({x:cx+radius*Math.sin(ang(i)),y:cy-radius*Math.cos(ang(i))});
   const gridLines=Array.from({length:lv},(_,li)=>{
     const rr=(r*(li+1))/lv;
     const pts=keys.map((_,i)=>{const p=pt(i,rr);return `${p.x},${p.y}`;}).join(' ');
-    return `<polygon points="${pts}" fill="none" stroke="#ccc" stroke-width="0.5"/>`;
+    return `<polygon points="${pts}" fill="none" stroke="#ccc" stroke-width="0.6"/>`;
   }).join('');
-  const axes=keys.map((_,i)=>{const p=pt(i,r);return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#ccc" stroke-width="0.5"/>`;}).join('');
+  const axes=keys.map((_,i)=>{const p=pt(i,r);return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#ccc" stroke-width="0.6"/>`;}).join('');
   const datapts=keys.map((d,i)=>{const p=pt(i,r*scores[d]/100);return `${p.x},${p.y}`;}).join(' ');
-  const dots=keys.map((d,i)=>{const p=pt(i,r*scores[d]/100);return `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${color}" stroke="white" stroke-width="1"/>`;}).join('');
+  const dots=keys.map((d,i)=>{const p=pt(i,r*scores[d]/100);return `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${color}" stroke="white" stroke-width="1.2"/>`;}).join('');
   const labels=keys.map((d,i)=>{
-    const p=pt(i,r+14);
-    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="${DIMS[d].color}">${DIMS[d].icon}${DIMS[d].ja.name}</text>`;
+    const p=pt(i,r+16);
+    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="bold" fill="${DIMS[d].color}">${DIMS[d].icon}${DIMS[d].ja.name}</text>`;
   }).join('');
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
     ${gridLines}${axes}
-    <polygon points="${datapts}" fill="${color}" fill-opacity="${opacity}" stroke="${color}" stroke-width="2"/>
+    <polygon points="${datapts}" fill="${color}" fill-opacity="0.15" stroke="${color}" stroke-width="2.5"/>
     ${dots}${labels}
   </svg>`;
 }
 
-// 複数人の比較レーダーチャートSVG
+// ─── SVGレーダーチャート（比較・塗りなし）───
 function makeGroupRadarSVG(records, size){
   const keys=Object.keys(records[0].scores);
-  const cx=size/2, cy=size/2, r=size*0.35, lv=5;
+  const cx=size/2, cy=size/2, r=size*0.33, lv=5;
   const ang=i=>(2*Math.PI*i)/keys.length;
   const pt=(i,radius)=>({x:cx+radius*Math.sin(ang(i)),y:cy-radius*Math.cos(ang(i))});
   const gridLines=Array.from({length:lv},(_,li)=>{
     const rr=(r*(li+1))/lv;
     const pts=keys.map((_,i)=>{const p=pt(i,rr);return `${p.x},${p.y}`;}).join(' ');
-    return `<polygon points="${pts}" fill="none" stroke="#bbb" stroke-width="0.5"/>`;
+    return `<polygon points="${pts}" fill="none" stroke="#bbb" stroke-width="0.6"/>`;
   }).join('');
-  const axes=keys.map((_,i)=>{const p=pt(i,r);return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#bbb" stroke-width="0.5"/>`;}).join('');
+  const axes=keys.map((_,i)=>{const p=pt(i,r);return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#bbb" stroke-width="0.6"/>`;}).join('');
+  // ★ fill-opacity="0" で塗りなし
   const dataPolygons=records.map((rec,ri)=>{
     const col=GROUP_COLORS[ri%GROUP_COLORS.length];
     const datapts=keys.map((d,i)=>{const p=pt(i,r*rec.scores[d]/100);return `${p.x},${p.y}`;}).join(' ');
-    const dots=keys.map((d,i)=>{const p=pt(i,r*rec.scores[d]/100);return `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${col}" stroke="white" stroke-width="1"/>`;}).join('');
-    return `<polygon points="${datapts}" fill="${col}" fill-opacity="0.08" stroke="${col}" stroke-width="2"/>${dots}`;
+    const dots=keys.map((d,i)=>{const p=pt(i,r*rec.scores[d]/100);return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${col}" stroke="white" stroke-width="1.5"/>`;}).join('');
+    return `<polygon points="${datapts}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>${dots}`;
   }).join('');
   const labels=keys.map((d,i)=>{
-    const p=pt(i,r+14);
-    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="#333">${DIMS[d].icon}${DIMS[d].ja.name}</text>`;
+    const p=pt(i,r+16);
+    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="bold" fill="#333">${DIMS[d].icon}${DIMS[d].ja.name}</text>`;
   }).join('');
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
     ${gridLines}${axes}${dataPolygons}${labels}
   </svg>`;
 }
 
-// ─── 個別PDF生成 ───
+// ─── 個別PDFページ生成 ───
+// レーダーチャートを上部に大きく、その下に総合所見・推奨質問
 function buildIndividualPage(r){
   const langInfo=LANGUAGES.find(l=>l.code===r.lang);
   const qs=generateIQs(r.scores);
   const lcP=s=>s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
   const lvP=s=>s>=70?'高':s>=40?'中':'低';
   const vs=validityStyle(r.validity);
-  const radarSVG=makeRadarSVG(r.scores,200,'#6C9BF7',0.15);
+  // ★ 個別は大きめ（260px）で中央に表示
+  const radarSVG=makeRadarSVG(r.scores, 260, '#4a7af5');
   return `
     <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:6pt;margin-bottom:8pt;display:flex;justify-content:space-between;align-items:flex-end">
       <div>
@@ -203,7 +213,7 @@ function buildIndividualPage(r){
       <div><span style="color:#888;font-size:7.5pt">回答信頼性</span><br><b style="color:${vs.col}">${vs.label}</b></div>
     </div>
     <h2 style="font-size:9pt;margin:0 0 5pt;border-left:3pt solid #6C9BF7;padding-left:5pt">診断スコア</h2>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:6pt;font-size:8pt">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:10pt;font-size:8pt">
       <thead><tr style="background:#f0f4ff">${['特性','スコア','レベル','解釈'].map(h=>`<th style="padding:3pt 6pt;text-align:left;border:1px solid #dce4ff">${h}</th>`).join('')}</tr></thead>
       <tbody>${Object.entries(r.scores).map(([d,s])=>`<tr>
         <td style="padding:3pt 6pt;border:1px solid #dce4ff;font-weight:700"><span style="color:${DIMS[d].color}">${DIMS[d].icon}</span> ${DIMS[d].ja.name}</td>
@@ -212,71 +222,49 @@ function buildIndividualPage(r){
         <td style="padding:3pt 6pt;border:1px solid #dce4ff;font-size:7.5pt;line-height:1.4">${interpText(d,s,'ja')}</td>
       </tr>`).join('')}</tbody>
     </table>
-    <div style="display:flex;gap:12pt;align-items:flex-start;margin-bottom:6pt">
-      <div style="flex-shrink:0">${radarSVG}</div>
-      <div style="flex:1">
-        <h2 style="font-size:9pt;margin:0 0 4pt;border-left:3pt solid #5BC8AF;padding-left:5pt">総合所見</h2>
-        <div style="background:#f5fff9;border:1px solid #b8e8d8;border-radius:4pt;padding:6pt 8pt;margin-bottom:6pt;font-size:8pt">${overallComment(r.scores)}</div>
-        <h2 style="font-size:9pt;margin:0 0 4pt;border-left:3pt solid #F4A261;padding-left:5pt">面接での推奨質問</h2>
-        <ol style="margin:0;padding-left:12pt;font-size:8pt">${qs.map(q=>`<li style="margin-bottom:2pt">${q}</li>`).join('')}</ol>
-      </div>
-    </div>
-    ${!r.validity?.ok?`<div style="background:#fff8f0;border:1px solid #f4c87a;border-radius:4pt;padding:5pt 8pt;font-size:7.5pt;margin-bottom:4pt"><b style="color:#c07030">⚠️ 信頼性（${vs.label}）：</b>実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
-    <div style="margin-top:6pt;padding-top:5pt;border-top:1px solid #ddd;font-size:7pt;color:#aaa;display:flex;justify-content:space-between">
+    <div style="text-align:center;margin-bottom:8pt">${radarSVG}</div>
+    <h2 style="font-size:9pt;margin:0 0 4pt;border-left:3pt solid #5BC8AF;padding-left:5pt">総合所見</h2>
+    <div style="background:#f5fff9;border:1px solid #b8e8d8;border-radius:4pt;padding:6pt 8pt;margin-bottom:8pt;font-size:8pt">${overallComment(r.scores)}</div>
+    <h2 style="font-size:9pt;margin:0 0 4pt;border-left:3pt solid #F4A261;padding-left:5pt">面接での推奨質問</h2>
+    <ol style="margin:0;padding-left:12pt;font-size:8pt">${qs.map(q=>`<li style="margin-bottom:2pt">${q}</li>`).join('')}</ol>
+    ${!r.validity?.ok?`<div style="margin-top:6pt;background:#fff8f0;border:1px solid #f4c87a;border-radius:4pt;padding:5pt 8pt;font-size:7.5pt"><b style="color:#c07030">⚠️ 信頼性（${vs.label}）：</b>実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
+    <div style="margin-top:8pt;padding-top:5pt;border-top:1px solid #ddd;font-size:7pt;color:#aaa;display:flex;justify-content:space-between">
       <span>候補者 性格診断システム — Tokutei Ginou</span><span>コード：${r.code}</span>
     </div>`;
 }
 
 // ─── 比較レーダーページ生成 ───
+// チャートを大きく中央に、凡例を下に
 function buildGroupRadarPage(records){
-  const radarSVG=makeGroupRadarSVG(records,280);
-  const legend=records.map((r,i)=>{
-    const col=GROUP_COLORS[i%GROUP_COLORS.length];
-    const vs=validityStyle(r.validity);
-    return `<div style="display:flex;align-items:center;gap:6pt;margin-bottom:4pt">
-      <div style="width:16pt;height:3pt;background:${col};border-radius:2pt;flex-shrink:0"></div>
-      <span style="font-size:8.5pt;font-weight:700">${r.name}</span>
-      <span style="font-size:7.5pt;color:${vs.col}">${vs.label}</span>
-    </div>`;
-  }).join('');
-  const scoreTable=`<table style="width:100%;border-collapse:collapse;font-size:7.5pt;margin-top:8pt">
-    <thead><tr style="background:#f0f4ff">
-      <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:left">氏名</th>
-      ${Object.keys(records[0].scores).map(d=>`<th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;color:${DIMS[d].color}">${DIMS[d].icon}${DIMS[d].ja.name}</th>`).join('')}
-      <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">信頼性</th>
-    </tr></thead>
-    <tbody>${records.map((r,i)=>{
+  // ★ 大きめサイズ（360px）
+  const radarSVG=makeGroupRadarSVG(records, 360);
+  const colorNames=['赤','青','黄色','緑','紫','黒'];
+  const legend=`<div style="display:flex;flex-wrap:wrap;gap:10pt;justify-content:center;margin-top:10pt">
+    ${records.map((r,i)=>{
       const col=GROUP_COLORS[i%GROUP_COLORS.length];
       const vs=validityStyle(r.validity);
-      return `<tr>
-        <td style="padding:3pt 5pt;border:1px solid #dce4ff;font-weight:700;color:${col}">${r.name}</td>
-        ${Object.entries(r.scores).map(([d,s])=>`<td style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;font-weight:700">${s}</td>`).join('')}
-        <td style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;font-size:7pt;color:${vs.col}">${vs.label}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
+      return `<div style="display:flex;align-items:center;gap:6pt;border:1px solid #ddd;border-radius:4pt;padding:4pt 8pt">
+        <div style="width:20pt;height:3pt;background:${col};border-radius:2pt;flex-shrink:0"></div>
+        <span style="font-size:9pt;font-weight:700;color:#1a1a2e">${r.name}</span>
+        <span style="font-size:8pt;color:${vs.col}">${vs.label}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
   return `
     <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:6pt;margin-bottom:10pt">
       <h1 style="font-size:13pt;margin:0">候補者 比較レーダーチャート</h1>
       <p style="font-size:8pt;color:#666;margin:1pt 0 0">Big Five Personality Assessment — Tokutei Ginou</p>
     </div>
-    <div style="display:flex;gap:16pt;align-items:flex-start">
-      <div style="flex-shrink:0">${radarSVG}</div>
-      <div style="flex:1">
-        <h2 style="font-size:9pt;margin:0 0 8pt;border-left:3pt solid #6C9BF7;padding-left:5pt">凡例</h2>
-        ${legend}
-      </div>
-    </div>
-    ${scoreTable}
-    <div style="margin-top:10pt;padding-top:5pt;border-top:1px solid #ddd;font-size:7pt;color:#aaa">
+    <div style="text-align:center">${radarSVG}</div>
+    ${legend}
+    <div style="margin-top:14pt;padding-top:5pt;border-top:1px solid #ddd;font-size:7pt;color:#aaa">
       候補者 性格診断システム — Tokutei Ginou
     </div>`;
 }
 
 // ─── 印刷実行 ───
 function printResult(r){
-  const fileName=`${r.name}_性格診断結果`;
-  document.title=fileName;
+  document.title=`${r.name}_性格診断結果`;
   document.getElementById('printArea').innerHTML=`<div class="page-break">${buildIndividualPage(r)}</div>`;
   window.print();
   setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
@@ -285,7 +273,6 @@ function printResult(r){
 function printSelected(){
   const selected=state.selectedForPrint;
   if(selected.length===0){alert('印刷する候補者を選択してください');return;}
-  // まとめ印刷：比較レーダー(1枚) + 個別ページ
   const pages=[
     `<div class="page-break">${buildGroupRadarPage(selected)}</div>`,
     ...selected.map((r,i)=>`<div class="${i<selected.length-1?'page-break':''}">${buildIndividualPage(r)}</div>`)
@@ -353,13 +340,17 @@ function renderLogin(){
   </div></div>`;
 }
 
-function renderDashboard(){
-  const filtered=state.results.filter(r=>{
+function getFiltered(){
+  return state.results.filter(r=>{
     if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
     if(state.filterV==='ok'&&!r.validity?.ok)return false;
     if(state.filterV==='warn'&&r.validity?.ok)return false;
     return true;
   });
+}
+
+function renderDashboard(){
+  const filtered=getFiltered();
   const stats=[
     {l:'総受験者数',v:state.results.length,c:'#6C9BF7'},
     {l:'◎ 高い',v:state.results.filter(r=>r.validity?.level==='high').length,c:'#5BC8AF'},
@@ -397,14 +388,12 @@ function renderResultsTab(filtered,stats){
     const active=state.filterV===v;
     return `<button class="filter-btn ${active?'active':''}" data-fv="${v}">${l}</button>`;
   }).join('');
-
   const selBar=sel.length>0?`<div class="sel-bar">
     <span style="color:#6C9BF7;font-weight:700;font-size:13px">📋 選択中：${sel.length}人 / 最大6人</span>
     <span style="color:rgba(255,255,255,0.6);font-size:12px">${sel.map(r=>r.name).join('、')}</span>
     <button class="btn btn-orange" id="printSelectedBtn" style="margin-left:auto">🖨️ まとめてPDF印刷</button>
     <button class="btn btn-ghost" id="clearSelBtn" style="padding:7px 14px;font-size:12px">選択解除</button>
   </div>`:'';
-
   const rows=filtered.length===0
     ?`<tr><td colspan="11" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
     :filtered.map((r,i)=>{
@@ -430,7 +419,6 @@ function renderResultsTab(filtered,stats){
           </td>
         </tr>`;
       }).join('');
-
   return `
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
       ${stats.map(s=>`<div class="glass stat-card"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('')}
@@ -561,32 +549,16 @@ function bindDashboard(){
   document.querySelectorAll('[data-flang]').forEach(btn=>btn.addEventListener('click',()=>{state.filterLang=btn.dataset.flang;render();}));
   document.querySelectorAll('[data-fv]').forEach(btn=>btn.addEventListener('click',()=>{state.filterV=btn.dataset.fv;render();}));
   document.querySelectorAll('[data-detail]').forEach(btn=>btn.addEventListener('click',()=>{
-    const filtered=state.results.filter(r=>{
-      if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
-      if(state.filterV==='ok'&&!r.validity?.ok)return false;
-      if(state.filterV==='warn'&&r.validity?.ok)return false;
-      return true;
-    });
+    const filtered=getFiltered();
     state.detail=filtered[parseInt(btn.dataset.detail)];render();
   }));
   document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>{
-    const filtered=state.results.filter(r=>{
-      if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
-      if(state.filterV==='ok'&&!r.validity?.ok)return false;
-      if(state.filterV==='warn'&&r.validity?.ok)return false;
-      return true;
-    });
+    const filtered=getFiltered();
     printResult(filtered[parseInt(btn.dataset.print)]);
   }));
-  // チェックボックス選択
   document.querySelectorAll('[data-sel]').forEach(cb=>{
     cb.addEventListener('change',()=>{
-      const filtered=state.results.filter(r=>{
-        if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
-        if(state.filterV==='ok'&&!r.validity?.ok)return false;
-        if(state.filterV==='warn'&&r.validity?.ok)return false;
-        return true;
-      });
+      const filtered=getFiltered();
       toggleSelect(filtered[parseInt(cb.dataset.sel)]);
     });
   });
