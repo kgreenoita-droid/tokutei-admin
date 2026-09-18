@@ -247,7 +247,7 @@ function buildGroupRadarPage(records){
           const vs=validityStyle(r.validity);
           return `<tr>
             <td style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center">
-              <div style="display:inline-block;width:36px;height:5px;background:${col};border-radius:3px;vertical-align:middle"></div>
+              <svg width="44" height="10" viewBox="0 0 44 10" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle"><rect x="0" y="3" width="44" height="5" rx="2" fill="${col}"/></svg>
             </td>
             <td style="padding:5pt 8pt;border:1px solid #dce4ff;font-weight:700">${r.name}</td>
             <td style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center;font-weight:700;color:${vs.col}">${vs.label}</td>
