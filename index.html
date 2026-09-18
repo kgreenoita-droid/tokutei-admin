@@ -236,7 +236,7 @@ function buildGroupRadarPage(records){
     <table style="width:100%;border-collapse:collapse;font-size:9pt;margin-top:10pt">
       <thead>
         <tr style="background:#f0f4ff">
-          <th style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center;width:50pt">色</th>
+          <th style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center;width:60px">色</th>
           <th style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:left">氏名／番号</th>
           <th style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center">信頼性</th>
         </tr>
@@ -247,7 +247,7 @@ function buildGroupRadarPage(records){
           const vs=validityStyle(r.validity);
           return `<tr>
             <td style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center">
-              <div style="display:inline-block;width:36pt;height:4pt;background:${col};border-radius:2pt;vertical-align:middle"></div>
+              <div style="display:inline-block;width:36px;height:5px;background:${col};border-radius:3px;vertical-align:middle"></div>
             </td>
             <td style="padding:5pt 8pt;border:1px solid #dce4ff;font-weight:700">${r.name}</td>
             <td style="padding:5pt 8pt;border:1px solid #dce4ff;text-align:center;font-weight:700;color:${vs.col}">${vs.label}</td>
