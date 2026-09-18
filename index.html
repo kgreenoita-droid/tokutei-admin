@@ -12,7 +12,8 @@ body { min-height:100vh; background:linear-gradient(135deg,#0c0a24 0%,#16113a 55
 .glass { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:14px; }
 .card-login { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:24px; padding:40px 36px; max-width:420px; width:100%; text-align:center; }
 .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
-input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
+input[type=text],input[type=password] { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
+input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color:#6C9BF7; }
 select { background:#1a1440; border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:10px 14px; color:#fff; font-size:14px; font-family:inherit; outline:none; }
 select option { background:#1a1440; color:#fff; }
 .btn { border:none; border-radius:10px; padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -20,6 +21,7 @@ select option { background:#1a1440; color:#fff; }
 .btn-green   { background:linear-gradient(135deg,#5BC8AF,#38a98e); color:#fff; }
 .btn-pink    { background:linear-gradient(135deg,#E76F9A,#c0547a); color:#fff; }
 .btn-ghost   { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.7); }
+.btn-orange  { background:linear-gradient(135deg,#F4A261,#e08040); color:#fff; }
 .btn-sm { padding:4px 10px; font-size:11px; border-radius:6px; font-weight:700; cursor:pointer; font-family:inherit; border:1px solid; }
 .error { color:#F4A261; font-size:12px; margin:0 0 10px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
@@ -33,10 +35,13 @@ td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); }
 .stat-card { padding:12px 18px; text-align:center; flex:1; min-width:100px; }
 .stat-val { font-weight:800; font-size:22px; margin-bottom:2px; }
 .stat-lbl { color:rgba(255,255,255,0.4); font-size:11px; }
+.sel-bar { background:rgba(108,155,247,0.1); border:1px solid rgba(108,155,247,0.3); border-radius:10px; padding:10px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 @media print {
   body>*:not(#printArea){display:none!important}
-  #printArea{display:block!important;font-family:'Noto Sans JP','Noto Sans',sans-serif;color:#1a1a2e;font-size:9.5pt;line-height:1.65}
-  @page{margin:15mm;size:A4}
+  #printArea{display:block!important;font-family:'Noto Sans JP','Noto Sans',sans-serif;color:#1a1a2e;font-size:9pt;line-height:1.6}
+  @page{margin:12mm;size:A4}
+  .page-break{page-break-after:always}
+  .page-break:last-child{page-break-after:avoid}
 }
 #printArea{display:none}
 </style>
@@ -77,6 +82,9 @@ const INTERP = {
   N:{ja:{high:'ストレスに敏感な面があります。サポート体制や丁寧なコミュニケーションが助けになります。',mid:'感情の波はありますが、対処能力も持っています。',low:'感情が安定しており、プレッシャーの多い現場でも冷静に対応できます。'},id:{high:'Cukup sensitif terhadap stres.',mid:'Ada naik turun emosi namun memiliki kemampuan untuk mengatasinya.',low:'Emosi stabil dan dapat menghadapi tekanan dengan tenang.'},my:{high:'စိတ်ဖိစီးမှုကို ထိခိုက်လွယ်သောဘက်ရှိသည်။',mid:'ခံစားချက်တက်ကျမှု ရှိသော်လည်း ကိုင်တွယ်ဖြေရှင်းနိုင်မှုစွမ်းရည်လည်း ရှိသည်။',low:'ခံစားချက်များ တည်ငြိမ်ပြီး ဖိစီးမှုများသောလုပ်ငန်းခွင်တွင်လည်း တည်ငြိမ်စွာ ကိုင်တွယ်နိုင်သည်။'}},
 };
 
+// 6人分の色（比較レーダー用）
+const GROUP_COLORS = ['#6C9BF7','#5BC8AF','#F4A261','#E76F9A','#9B8EF7','#F7C948'];
+
 function getLevel(s){return s>=70?'high':s>=40?'mid':'low';}
 function interpText(dim,s,lang){return INTERP[dim][lang][getLevel(s)];}
 function fmt(dt){return new Date(dt).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
@@ -85,7 +93,6 @@ function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const s=n=>Array.f
 function lv(s){return s>=70?'高':s>=40?'中':'低';}
 function lc(s){return s>=70?'#5BC8AF':s>=40?'#F4A261':'#9B8EF7';}
 
-// ★ 信頼性4段階
 function validityStyle(v){
   if(!v) return {label:'—',bg:'rgba(255,255,255,0.05)',col:'rgba(255,255,255,0.3)'};
   const level=v.level||(v.ok?'good':'alert');
@@ -120,76 +127,214 @@ function overallComment(scores){
   return `この候補者は${p}タイプです。面接では「${f}」についてさらに確認することをお勧めします。`;
 }
 
-function isAuthed(){ return localStorage.getItem('tg_admin_authed')==='true'; }
-function setAuthed(v){ if(v) localStorage.setItem('tg_admin_authed','true'); else localStorage.removeItem('tg_admin_authed'); }
-
-let state = { tab:'results', codes:[], results:[], detail:null, filterLang:'all', filterV:'all', newLang:'id', newNote:'', loading:false, copyMsg:{}, pwErr:false };
-
-async function loadAll(){
-  state.loading=true; render();
-  const {data:codes}=await sb.from('codes').select('*').order('created_at',{ascending:false});
-  const {data:results}=await sb.from('results').select('*').order('created_at',{ascending:false});
-  state.codes=codes||[]; state.results=results||[];
-  state.loading=false; render();
+// ─── SVGレーダーチャート生成 ───
+function makeRadarSVG(scores, size, color, opacity){
+  const keys=Object.keys(scores);
+  const cx=size/2, cy=size/2, r=size*0.35, lv=5;
+  const ang=i=>(2*Math.PI*i)/keys.length;
+  const pt=(i,radius)=>({x:cx+radius*Math.sin(ang(i)),y:cy-radius*Math.cos(ang(i))});
+  const gridLines=Array.from({length:lv},(_,li)=>{
+    const rr=(r*(li+1))/lv;
+    const pts=keys.map((_,i)=>{const p=pt(i,rr);return `${p.x},${p.y}`;}).join(' ');
+    return `<polygon points="${pts}" fill="none" stroke="#ccc" stroke-width="0.5"/>`;
+  }).join('');
+  const axes=keys.map((_,i)=>{const p=pt(i,r);return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#ccc" stroke-width="0.5"/>`;}).join('');
+  const datapts=keys.map((d,i)=>{const p=pt(i,r*scores[d]/100);return `${p.x},${p.y}`;}).join(' ');
+  const dots=keys.map((d,i)=>{const p=pt(i,r*scores[d]/100);return `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${color}" stroke="white" stroke-width="1"/>`;}).join('');
+  const labels=keys.map((d,i)=>{
+    const p=pt(i,r+14);
+    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="${DIMS[d].color}">${DIMS[d].icon}${DIMS[d].ja.name}</text>`;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    ${gridLines}${axes}
+    <polygon points="${datapts}" fill="${color}" fill-opacity="${opacity}" stroke="${color}" stroke-width="2"/>
+    ${dots}${labels}
+  </svg>`;
 }
 
-async function addCode(){
-  // ★ expires_at を100年後に設定（事実上無期限）
-  const farFuture = Date.now() + (100 * 365 * 24 * 60 * 60 * 1000);
-  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:farFuture};
-  await sb.from('codes').insert(c);
-  state.newNote=''; await loadAll();
+// 複数人の比較レーダーチャートSVG
+function makeGroupRadarSVG(records, size){
+  const keys=Object.keys(records[0].scores);
+  const cx=size/2, cy=size/2, r=size*0.35, lv=5;
+  const ang=i=>(2*Math.PI*i)/keys.length;
+  const pt=(i,radius)=>({x:cx+radius*Math.sin(ang(i)),y:cy-radius*Math.cos(ang(i))});
+  const gridLines=Array.from({length:lv},(_,li)=>{
+    const rr=(r*(li+1))/lv;
+    const pts=keys.map((_,i)=>{const p=pt(i,rr);return `${p.x},${p.y}`;}).join(' ');
+    return `<polygon points="${pts}" fill="none" stroke="#bbb" stroke-width="0.5"/>`;
+  }).join('');
+  const axes=keys.map((_,i)=>{const p=pt(i,r);return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#bbb" stroke-width="0.5"/>`;}).join('');
+  const dataPolygons=records.map((rec,ri)=>{
+    const col=GROUP_COLORS[ri%GROUP_COLORS.length];
+    const datapts=keys.map((d,i)=>{const p=pt(i,r*rec.scores[d]/100);return `${p.x},${p.y}`;}).join(' ');
+    const dots=keys.map((d,i)=>{const p=pt(i,r*rec.scores[d]/100);return `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${col}" stroke="white" stroke-width="1"/>`;}).join('');
+    return `<polygon points="${datapts}" fill="${col}" fill-opacity="0.08" stroke="${col}" stroke-width="2"/>${dots}`;
+  }).join('');
+  const labels=keys.map((d,i)=>{
+    const p=pt(i,r+14);
+    return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="#333">${DIMS[d].icon}${DIMS[d].ja.name}</text>`;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    ${gridLines}${axes}${dataPolygons}${labels}
+  </svg>`;
 }
 
-async function deleteCode(code){
-  await sb.from('codes').delete().eq('code',code); await loadAll();
-}
-
-function printResult(r){
+// ─── 個別PDF生成 ───
+function buildIndividualPage(r){
   const langInfo=LANGUAGES.find(l=>l.code===r.lang);
   const qs=generateIQs(r.scores);
   const lcP=s=>s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
   const lvP=s=>s>=70?'高':s>=40?'中':'低';
   const vs=validityStyle(r.validity);
-  const fileName=`${r.name}_性格診断結果`;
-  document.title=fileName;
-  document.getElementById('printArea').innerHTML=`
-    <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:8pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-end">
+  const radarSVG=makeRadarSVG(r.scores,200,'#6C9BF7',0.15);
+  return `
+    <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:6pt;margin-bottom:8pt;display:flex;justify-content:space-between;align-items:flex-end">
       <div>
-        <h1 style="font-size:15pt;margin:0">候補者 性格診断結果</h1>
-        <p style="font-size:8.5pt;color:#666;margin:2pt 0 0">Big Five Personality Assessment — Tokutei Ginou</p>
+        <h1 style="font-size:14pt;margin:0">候補者 性格診断結果</h1>
+        <p style="font-size:8pt;color:#666;margin:1pt 0 0">Big Five Personality Assessment — Tokutei Ginou</p>
       </div>
-      <div style="text-align:right;font-size:8pt;color:#888">
+      <div style="text-align:right;font-size:7.5pt;color:#888">
         <div>受験日時：${fmt(r.date)}</div><div>コード：${r.code}</div>
       </div>
     </div>
-    <div style="background:#f5f7ff;border:1px solid #dce4ff;border-radius:5pt;padding:7pt 12pt;margin-bottom:10pt;display:flex;gap:20pt;flex-wrap:wrap">
-      <div><span style="color:#888;font-size:8pt">氏名／番号</span><br><b style="font-size:13pt">${r.name}</b></div>
-      <div><span style="color:#888;font-size:8pt">言語</span><br><b>${langInfo?.flag} ${langInfo?.label}</b></div>
-      <div><span style="color:#888;font-size:8pt">回答信頼性</span><br><b style="color:${vs.col}">${vs.label}</b></div>
+    <div style="background:#f5f7ff;border:1px solid #dce4ff;border-radius:4pt;padding:6pt 10pt;margin-bottom:8pt;display:flex;gap:16pt;flex-wrap:wrap">
+      <div><span style="color:#888;font-size:7.5pt">氏名／番号</span><br><b style="font-size:12pt">${r.name}</b></div>
+      <div><span style="color:#888;font-size:7.5pt">言語</span><br><b>${langInfo?.flag} ${langInfo?.label}</b></div>
+      <div><span style="color:#888;font-size:7.5pt">回答信頼性</span><br><b style="color:${vs.col}">${vs.label}</b></div>
     </div>
-    <h2 style="font-size:10pt;margin:0 0 6pt;border-left:3pt solid #6C9BF7;padding-left:6pt">診断スコア</h2>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:10pt;font-size:8.5pt">
-      <thead><tr style="background:#f0f4ff">${['特性','スコア','レベル','解釈'].map(h=>`<th style="padding:4pt 7pt;text-align:left;border:1px solid #dce4ff">${h}</th>`).join('')}</tr></thead>
+    <h2 style="font-size:9pt;margin:0 0 5pt;border-left:3pt solid #6C9BF7;padding-left:5pt">診断スコア</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:6pt;font-size:8pt">
+      <thead><tr style="background:#f0f4ff">${['特性','スコア','レベル','解釈'].map(h=>`<th style="padding:3pt 6pt;text-align:left;border:1px solid #dce4ff">${h}</th>`).join('')}</tr></thead>
       <tbody>${Object.entries(r.scores).map(([d,s])=>`<tr>
-        <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-weight:700"><span style="color:${DIMS[d].color}">${DIMS[d].icon}</span> ${DIMS[d].ja.name}</td>
-        <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-weight:800;color:${lcP(s)};text-align:center">${s}点</td>
-        <td style="padding:4pt 7pt;border:1px solid #dce4ff;text-align:center;color:${lcP(s)};font-weight:700">${lvP(s)}</td>
-        <td style="padding:4pt 7pt;border:1px solid #dce4ff;font-size:8pt;line-height:1.5">${interpText(d,s,'ja')}</td>
+        <td style="padding:3pt 6pt;border:1px solid #dce4ff;font-weight:700"><span style="color:${DIMS[d].color}">${DIMS[d].icon}</span> ${DIMS[d].ja.name}</td>
+        <td style="padding:3pt 6pt;border:1px solid #dce4ff;font-weight:800;color:${lcP(s)};text-align:center">${s}点</td>
+        <td style="padding:3pt 6pt;border:1px solid #dce4ff;text-align:center;color:${lcP(s)};font-weight:700">${lvP(s)}</td>
+        <td style="padding:3pt 6pt;border:1px solid #dce4ff;font-size:7.5pt;line-height:1.4">${interpText(d,s,'ja')}</td>
       </tr>`).join('')}</tbody>
     </table>
-    <h2 style="font-size:10pt;margin:0 0 5pt;border-left:3pt solid #5BC8AF;padding-left:6pt">総合所見</h2>
-    <div style="background:#f5fff9;border:1px solid #b8e8d8;border-radius:5pt;padding:7pt 11pt;margin-bottom:10pt;font-size:8.5pt">${overallComment(r.scores)}</div>
-    <h2 style="font-size:10pt;margin:0 0 5pt;border-left:3pt solid #F4A261;padding-left:6pt">面接での推奨質問</h2>
-    <ol style="margin:0;padding-left:14pt;font-size:8.5pt">${qs.map(q=>`<li style="margin-bottom:3pt">${q}</li>`).join('')}</ol>
-    ${!r.validity?.ok?`<div style="margin-top:10pt;background:#fff8f0;border:1px solid #f4c87a;border-radius:5pt;padding:7pt 11pt;font-size:8.5pt"><b style="color:#c07030">⚠️ 回答信頼性（${vs.label}）：</b>一部の回答パターンから、実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
-    <div style="margin-top:14pt;padding-top:6pt;border-top:1px solid #ddd;font-size:7.5pt;color:#aaa;display:flex;justify-content:space-between">
+    <div style="display:flex;gap:12pt;align-items:flex-start;margin-bottom:6pt">
+      <div style="flex-shrink:0">${radarSVG}</div>
+      <div style="flex:1">
+        <h2 style="font-size:9pt;margin:0 0 4pt;border-left:3pt solid #5BC8AF;padding-left:5pt">総合所見</h2>
+        <div style="background:#f5fff9;border:1px solid #b8e8d8;border-radius:4pt;padding:6pt 8pt;margin-bottom:6pt;font-size:8pt">${overallComment(r.scores)}</div>
+        <h2 style="font-size:9pt;margin:0 0 4pt;border-left:3pt solid #F4A261;padding-left:5pt">面接での推奨質問</h2>
+        <ol style="margin:0;padding-left:12pt;font-size:8pt">${qs.map(q=>`<li style="margin-bottom:2pt">${q}</li>`).join('')}</ol>
+      </div>
+    </div>
+    ${!r.validity?.ok?`<div style="background:#fff8f0;border:1px solid #f4c87a;border-radius:4pt;padding:5pt 8pt;font-size:7.5pt;margin-bottom:4pt"><b style="color:#c07030">⚠️ 信頼性（${vs.label}）：</b>実際より良く見せようとした可能性があります。面接での直接確認を重視してください。</div>`:''}
+    <div style="margin-top:6pt;padding-top:5pt;border-top:1px solid #ddd;font-size:7pt;color:#aaa;display:flex;justify-content:space-between">
       <span>候補者 性格診断システム — Tokutei Ginou</span><span>コード：${r.code}</span>
     </div>`;
-  window.print();
-  setTimeout(()=>{ document.title='管理者ダッシュボード | Tokutei Ginou'; },2000);
 }
 
+// ─── 比較レーダーページ生成 ───
+function buildGroupRadarPage(records){
+  const radarSVG=makeGroupRadarSVG(records,280);
+  const legend=records.map((r,i)=>{
+    const col=GROUP_COLORS[i%GROUP_COLORS.length];
+    const vs=validityStyle(r.validity);
+    return `<div style="display:flex;align-items:center;gap:6pt;margin-bottom:4pt">
+      <div style="width:16pt;height:3pt;background:${col};border-radius:2pt;flex-shrink:0"></div>
+      <span style="font-size:8.5pt;font-weight:700">${r.name}</span>
+      <span style="font-size:7.5pt;color:${vs.col}">${vs.label}</span>
+    </div>`;
+  }).join('');
+  const scoreTable=`<table style="width:100%;border-collapse:collapse;font-size:7.5pt;margin-top:8pt">
+    <thead><tr style="background:#f0f4ff">
+      <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:left">氏名</th>
+      ${Object.keys(records[0].scores).map(d=>`<th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;color:${DIMS[d].color}">${DIMS[d].icon}${DIMS[d].ja.name}</th>`).join('')}
+      <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">信頼性</th>
+    </tr></thead>
+    <tbody>${records.map((r,i)=>{
+      const col=GROUP_COLORS[i%GROUP_COLORS.length];
+      const vs=validityStyle(r.validity);
+      return `<tr>
+        <td style="padding:3pt 5pt;border:1px solid #dce4ff;font-weight:700;color:${col}">${r.name}</td>
+        ${Object.entries(r.scores).map(([d,s])=>`<td style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;font-weight:700">${s}</td>`).join('')}
+        <td style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;font-size:7pt;color:${vs.col}">${vs.label}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+  return `
+    <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:6pt;margin-bottom:10pt">
+      <h1 style="font-size:13pt;margin:0">候補者 比較レーダーチャート</h1>
+      <p style="font-size:8pt;color:#666;margin:1pt 0 0">Big Five Personality Assessment — Tokutei Ginou</p>
+    </div>
+    <div style="display:flex;gap:16pt;align-items:flex-start">
+      <div style="flex-shrink:0">${radarSVG}</div>
+      <div style="flex:1">
+        <h2 style="font-size:9pt;margin:0 0 8pt;border-left:3pt solid #6C9BF7;padding-left:5pt">凡例</h2>
+        ${legend}
+      </div>
+    </div>
+    ${scoreTable}
+    <div style="margin-top:10pt;padding-top:5pt;border-top:1px solid #ddd;font-size:7pt;color:#aaa">
+      候補者 性格診断システム — Tokutei Ginou
+    </div>`;
+}
+
+// ─── 印刷実行 ───
+function printResult(r){
+  const fileName=`${r.name}_性格診断結果`;
+  document.title=fileName;
+  document.getElementById('printArea').innerHTML=`<div class="page-break">${buildIndividualPage(r)}</div>`;
+  window.print();
+  setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
+}
+
+function printSelected(){
+  const selected=state.selectedForPrint;
+  if(selected.length===0){alert('印刷する候補者を選択してください');return;}
+  // まとめ印刷：比較レーダー(1枚) + 個別ページ
+  const pages=[
+    `<div class="page-break">${buildGroupRadarPage(selected)}</div>`,
+    ...selected.map((r,i)=>`<div class="${i<selected.length-1?'page-break':''}">${buildIndividualPage(r)}</div>`)
+  ].join('');
+  document.title=`候補者診断結果_${selected.length}名`;
+  document.getElementById('printArea').innerHTML=pages;
+  window.print();
+  setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
+}
+
+// ─── STATE ───
+function isAuthed(){return localStorage.getItem('tg_admin_authed')==='true';}
+function setAuthed(v){if(v)localStorage.setItem('tg_admin_authed','true');else localStorage.removeItem('tg_admin_authed');}
+
+let state={tab:'results',codes:[],results:[],detail:null,filterLang:'all',filterV:'all',newLang:'id',newNote:'',loading:false,copyMsg:{},pwErr:false,selectedForPrint:[]};
+
+async function loadAll(){
+  state.loading=true;render();
+  const {data:codes}=await sb.from('codes').select('*').order('created_at',{ascending:false});
+  const {data:results}=await sb.from('results').select('*').order('created_at',{ascending:false});
+  state.codes=codes||[];state.results=results||[];
+  state.loading=false;render();
+}
+
+async function addCode(){
+  const farFuture=Date.now()+(100*365*24*60*60*1000);
+  const c={code:genCode(),lang:state.newLang,note:state.newNote.trim()||null,created_at:Date.now(),expires_at:farFuture};
+  await sb.from('codes').insert(c);
+  state.newNote='';await loadAll();
+}
+
+async function deleteCode(code){
+  await sb.from('codes').delete().eq('code',code);await loadAll();
+}
+
+function toggleSelect(r){
+  const idx=state.selectedForPrint.findIndex(x=>x.id===r.id);
+  if(idx>=0){
+    state.selectedForPrint.splice(idx,1);
+  } else {
+    if(state.selectedForPrint.length>=6){alert('まとめ印刷は最大6人までです');return;}
+    state.selectedForPrint.push(r);
+  }
+  render();
+}
+
+function clearSelection(){state.selectedForPrint=[];render();}
+
+// ─── RENDER ───
 function render(){
   const app=document.getElementById('app');
   if(!isAuthed()){app.innerHTML=renderLogin();bindLogin();return;}
@@ -202,7 +347,7 @@ function renderLogin(){
     <div style="font-size:44px;margin-bottom:14px">🔐</div>
     <h1 style="font-size:22px;margin-bottom:6px">管理者ダッシュボード</h1>
     <p style="color:rgba(255,255,255,0.4);font-size:13px;margin-bottom:28px">候補者 性格診断管理システム</p>
-    <input id="pwInput" type="password" placeholder="管理者パスワード" style="width:100%;text-align:center;margin-bottom:8px">
+    <input type="password" id="pwInput" placeholder="管理者パスワード" style="width:100%;text-align:center;margin-bottom:8px">
     ${state.pwErr?'<p class="error">パスワードが正しくありません</p>':''}
     <button class="btn btn-pink" id="loginBtn" style="width:100%;padding:14px;font-size:15px;margin-top:4px">ログイン</button>
   </div></div>`;
@@ -242,6 +387,7 @@ function renderDashboard(){
 }
 
 function renderResultsTab(filtered,stats){
+  const sel=state.selectedForPrint;
   const langFilters=['all','ja','id','my'].map(c=>{
     const active=state.filterLang===c;
     const label=c==='all'?'全言語':(LANGUAGES.find(l=>l.code===c)?.flag+' '+LANGUAGES.find(l=>l.code===c)?.label);
@@ -251,12 +397,28 @@ function renderResultsTab(filtered,stats){
     const active=state.filterV===v;
     return `<button class="filter-btn ${active?'active':''}" data-fv="${v}">${l}</button>`;
   }).join('');
+
+  const selBar=sel.length>0?`<div class="sel-bar">
+    <span style="color:#6C9BF7;font-weight:700;font-size:13px">📋 選択中：${sel.length}人 / 最大6人</span>
+    <span style="color:rgba(255,255,255,0.6);font-size:12px">${sel.map(r=>r.name).join('、')}</span>
+    <button class="btn btn-orange" id="printSelectedBtn" style="margin-left:auto">🖨️ まとめてPDF印刷</button>
+    <button class="btn btn-ghost" id="clearSelBtn" style="padding:7px 14px;font-size:12px">選択解除</button>
+  </div>`:'';
+
   const rows=filtered.length===0
-    ?`<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
+    ?`<tr><td colspan="11" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
     :filtered.map((r,i)=>{
         const li=LANGUAGES.find(l=>l.code===r.lang);
         const vs=validityStyle(r.validity);
-        return `<tr>
+        const isSelected=sel.some(x=>x.id===r.id);
+        const selOrder=sel.findIndex(x=>x.id===r.id);
+        return `<tr style="${isSelected?'background:rgba(108,155,247,0.08)':''}">
+          <td style="text-align:center">
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="checkbox" data-sel="${i}" ${isSelected?'checked':''} ${!isSelected&&sel.length>=6?'disabled':''}>
+              ${isSelected?`<span style="color:#6C9BF7;font-size:10px;font-weight:700">${selOrder+1}</span>`:''}
+            </div>
+          </td>
           <td style="font-weight:700">${r.name}</td>
           <td><span style="font-size:15px">${li?.flag}</span></td>
           <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${fmt(r.date)}</td>
@@ -268,6 +430,7 @@ function renderResultsTab(filtered,stats){
           </td>
         </tr>`;
       }).join('');
+
   return `
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
       ${stats.map(s=>`<div class="glass stat-card"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('')}
@@ -277,20 +440,23 @@ function renderResultsTab(filtered,stats){
       <div style="width:1px;background:rgba(255,255,255,0.1);margin:0 4px;height:20px"></div>
       ${vFilters}
     </div>
+    ${selBar}
     <div class="glass" style="overflow-x:auto">
       <table>
         <thead><tr>
+          <th style="width:50px">選択</th>
           <th>氏名／番号</th><th>言語</th><th>受験日時</th><th>信頼性</th>
           <th>開放</th><th>誠実</th><th>外向</th><th>協調</th><th>神経</th><th>詳細/PDF</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>`;
+    </div>
+    <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">✅ チェックで選択（最大6人）→「まとめてPDF印刷」で比較レーダーチャート＋個別結果を一括印刷</p>`;
 }
 
 function renderCodesTab(){
   const rows=state.codes.length===0
-    ?`<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
+    ?`<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">コードがまだ発行されていません</td></tr>`
     :state.codes.map((c,i)=>{
         const li=LANGUAGES.find(l=>l.code===c.lang);
         const copyBtn=`<button class="btn-sm" style="background:${state.copyMsg[c.code]?'rgba(91,200,175,0.15)':'rgba(108,155,247,0.15)'};border-color:${state.copyMsg[c.code]?'rgba(91,200,175,0.3)':'rgba(108,155,247,0.3)'};color:${state.copyMsg[c.code]?'#5BC8AF':'#6C9BF7'}" data-copy="${c.code}">${state.copyMsg[c.code]?'✓ コピー済':'コピー'}</button>`;
@@ -307,19 +473,15 @@ function renderCodesTab(){
     <div class="glass" style="padding:20px;margin-bottom:14px">
       <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">🔑 新規コード発行</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <select id="newLangSel">
-          ${LANGUAGES.map(l=>`<option value="${l.code}" ${state.newLang===l.code?'selected':''}>${l.flag} ${l.label}</option>`).join('')}
-        </select>
-        <input id="newNoteInput" placeholder="メモ（任意）" style="flex:1;min-width:160px" value="${state.newNote}">
+        <select id="newLangSel">${LANGUAGES.map(l=>`<option value="${l.code}" ${state.newLang===l.code?'selected':''}>${l.flag} ${l.label}</option>`).join('')}</select>
+        <input type="text" id="newNoteInput" placeholder="メモ（任意）" style="flex:1;min-width:160px" value="${state.newNote}">
         <button class="btn btn-green" id="addCodeBtn">＋ 発行する</button>
       </div>
       <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">コードは削除するまで有効です。同じコードで何人でも受験できます。</p>
     </div>
     <div class="glass" style="overflow-x:auto">
       <table>
-        <thead><tr>
-          <th>コード</th><th>言語</th><th>メモ</th><th>発行日時</th><th>コピー</th><th>削除</th>
-        </tr></thead>
+        <thead><tr><th>コード</th><th>言語</th><th>メモ</th><th>発行日時</th><th>コピー</th><th>削除</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -398,8 +560,38 @@ function bindDashboard(){
   document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{state.tab=btn.dataset.tab;render();}));
   document.querySelectorAll('[data-flang]').forEach(btn=>btn.addEventListener('click',()=>{state.filterLang=btn.dataset.flang;render();}));
   document.querySelectorAll('[data-fv]').forEach(btn=>btn.addEventListener('click',()=>{state.filterV=btn.dataset.fv;render();}));
-  document.querySelectorAll('[data-detail]').forEach(btn=>btn.addEventListener('click',()=>{state.detail=state.results[parseInt(btn.dataset.detail)];render();}));
-  document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>{printResult(state.results[parseInt(btn.dataset.print)]);}));
+  document.querySelectorAll('[data-detail]').forEach(btn=>btn.addEventListener('click',()=>{
+    const filtered=state.results.filter(r=>{
+      if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
+      if(state.filterV==='ok'&&!r.validity?.ok)return false;
+      if(state.filterV==='warn'&&r.validity?.ok)return false;
+      return true;
+    });
+    state.detail=filtered[parseInt(btn.dataset.detail)];render();
+  }));
+  document.querySelectorAll('[data-print]').forEach(btn=>btn.addEventListener('click',()=>{
+    const filtered=state.results.filter(r=>{
+      if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
+      if(state.filterV==='ok'&&!r.validity?.ok)return false;
+      if(state.filterV==='warn'&&r.validity?.ok)return false;
+      return true;
+    });
+    printResult(filtered[parseInt(btn.dataset.print)]);
+  }));
+  // チェックボックス選択
+  document.querySelectorAll('[data-sel]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const filtered=state.results.filter(r=>{
+        if(state.filterLang!=='all'&&r.lang!==state.filterLang)return false;
+        if(state.filterV==='ok'&&!r.validity?.ok)return false;
+        if(state.filterV==='warn'&&r.validity?.ok)return false;
+        return true;
+      });
+      toggleSelect(filtered[parseInt(cb.dataset.sel)]);
+    });
+  });
+  document.getElementById('printSelectedBtn')?.addEventListener('click',printSelected);
+  document.getElementById('clearSelBtn')?.addEventListener('click',clearSelection);
   document.getElementById('addCodeBtn')?.addEventListener('click',()=>{
     state.newLang=document.getElementById('newLangSel')?.value||'id';
     state.newNote=document.getElementById('newNoteInput')?.value||'';
