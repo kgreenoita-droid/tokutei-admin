@@ -270,9 +270,58 @@ function buildIndividualPage(r){
     </div>`;
 }
 
+// ─── グループ統計サマリー生成 ───
+function groupStats(allRecords){
+  const dims=['O','C','E','A','N'];
+  const avg=d=>Math.round(allRecords.reduce((s,r)=>s+r.scores[d],0)/allRecords.length);
+  const max=d=>Math.max(...allRecords.map(r=>r.scores[d]));
+  const min=d=>Math.min(...allRecords.map(r=>r.scores[d]));
+  const avgs=Object.fromEntries(dims.map(d=>[d,avg(d)]));
+  // グループ全体の傾向コメント
+  const highDims=dims.filter(d=>avgs[d]>=65).map(d=>DIMS[d].ja.name);
+  const lowDims=dims.filter(d=>avgs[d]<40).map(d=>DIMS[d].ja.name);
+  const spread=d=>max(d)-min(d); // ばらつき幅
+  const wideDims=dims.filter(d=>spread(d)>=35).map(d=>DIMS[d].ja.name);
+  let trend='';
+  if(highDims.length>=2) trend+=`グループ全体として「${highDims.join('・')}」が高い傾向にあります。`;
+  else if(highDims.length===1) trend+=`「${highDims[0]}」がグループ平均として高い水準です。`;
+  else trend+='各軸ともバランスの取れたグループです。';
+  if(lowDims.length>0) trend+=` 一方、「${lowDims.join('・')}」は全体的に低めです。`;
+  if(wideDims.length>0) trend+=` 「${wideDims.join('・')}」はメンバー間のばらつきが大きく、個人差に注意が必要です。`;
+  // 特徴的な候補者をピックアップ
+  const topC=allRecords.reduce((a,b)=>a.scores.C>b.scores.C?a:b);
+  const topA=allRecords.reduce((a,b)=>a.scores.A>b.scores.A?a:b);
+  const lowN=allRecords.reduce((a,b)=>a.scores.N<b.scores.N?a:b);
+  const highN=allRecords.reduce((a,b)=>a.scores.N>b.scores.N?a:b);
+  return {avgs,max,min,spread,trend,topC,topA,lowN,highN,dims};
+}
+
+// ─── グループ内の個人位置づけコメント ───
+function groupPositionComment(r, allRecords){
+  const dims=['O','C','E','A','N'];
+  const avg=d=>allRecords.reduce((s,x)=>s+x.scores[d],0)/allRecords.length;
+  const rank=d=>{
+    const sorted=[...allRecords].sort((a,b)=>b.scores[d]-a.scores[d]);
+    return sorted.findIndex(x=>x.id===r.id)+1;
+  };
+  const n=allRecords.length;
+  const notable=[];
+  dims.forEach(d=>{
+    const diff=r.scores[d]-avg(d);
+    const rk=rank(d);
+    if(rk===1) notable.push(`${DIMS[d].ja.name}はグループ内で最も高い（${r.scores[d]}点）`);
+    else if(rk===n) notable.push(`${DIMS[d].ja.name}はグループ内で最も低い（${r.scores[d]}点）`);
+    else if(diff>=20) notable.push(`${DIMS[d].ja.name}は平均より${Math.round(diff)}点高い（${r.scores[d]}点）`);
+    else if(diff<=-20) notable.push(`${DIMS[d].ja.name}は平均より${Math.round(Math.abs(diff))}点低い（${r.scores[d]}点）`);
+  });
+  if(notable.length===0) return 'グループ内では各軸ともほぼ平均的な位置にいます。';
+  return notable.join('。')+'。';
+}
+
 // ─── 比較レーダーページ ───
-function buildGroupRadarPage(records){
+function buildGroupRadarPage(records, chunkIdx, totalChunks){
   const radarSVG=makeGroupRadarSVG(records, 460);
+  const chunkLabel=(chunkIdx&&totalChunks>1)?` （グループ ${chunkIdx}/${totalChunks}）`:'';
   const legendTable=`
     <table style="width:100%;border-collapse:collapse;font-size:9pt;margin-top:10pt">
       <thead>
@@ -297,15 +346,80 @@ function buildGroupRadarPage(records){
       </tbody>
     </table>`;
   return `
-    <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:5pt;margin-bottom:10pt">
-      <div style="font-size:13pt;font-weight:700;margin:0">候補者 比較レーダーチャート</div>
-      <div style="font-size:7.5pt;color:#666;margin:1pt 0 0">Big Five Personality Assessment — Tokutei Ginou</div>
+    <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:5pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <div style="font-size:13pt;font-weight:700;margin:0">候補者 比較レーダーチャート${chunkLabel}</div>
+        <div style="font-size:7.5pt;color:#666;margin:1pt 0 0">Big Five Personality Assessment — Tokutei Ginou</div>
+      </div>
+      <div style="font-size:8pt;color:#888">対象：${records.length}名</div>
     </div>
     ${radarSVG}
     ${legendTable}
     <div style="margin-top:10pt;padding-top:5pt;border-top:1px solid #ddd;font-size:6.5pt;color:#aaa">
       候補者 性格診断システム — Tokutei Ginou
     </div>`;
+}
+
+// ─── グループ統計サマリーページ ───
+function buildGroupSummaryPage(allRecords){
+  const st=groupStats(allRecords);
+  const dimRows=st.dims.map(d=>{
+    const a=st.avgs[d], mx=st.max(d), mn=st.min(d);
+    const topName=allRecords.reduce((a,b)=>a.scores[d]>b.scores[d]?a:b).name;
+    const botName=allRecords.reduce((a,b)=>a.scores[d]<b.scores[d]?a:b).name;
+    return `<tr>
+      <td style="padding:4pt 6pt;border:1px solid #dce4ff;font-weight:700"><span style="color:${DIMS[d].color}">${DIMS[d].icon}</span> ${DIMS[d].ja.name}</td>
+      <td style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center;font-weight:800;font-size:11pt">${a}</td>
+      <td style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center;color:#1a6e56;font-weight:700">${mx}<span style="font-size:7pt;color:#888"> (${topName})</span></td>
+      <td style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center;color:#4a3a9a;font-weight:700">${mn}<span style="font-size:7pt;color:#888"> (${botName})</span></td>
+      <td style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center;color:${st.spread(d)>=35?'#c05010':'#555'};font-weight:700">${st.spread(d)}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <div style="border-bottom:2.5px solid #6C9BF7;padding-bottom:5pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <div style="font-size:13pt;font-weight:700">候補者グループ 比較分析レポート</div>
+        <div style="font-size:7.5pt;color:#666;margin-top:1pt">Big Five Personality Assessment — Tokutei Ginou</div>
+      </div>
+      <div style="font-size:8pt;color:#888">対象：${allRecords.length}名</div>
+    </div>
+    <div style="font-size:8pt;font-weight:700;border-left:3pt solid #6C9BF7;padding-left:5pt;margin-bottom:5pt">グループ全体の傾向</div>
+    <div style="background:#f5f7ff;border:1px solid #dce4ff;border-radius:4pt;padding:7pt 10pt;margin-bottom:10pt;font-size:8pt;line-height:1.8">${st.trend}</div>
+    <div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF;padding-left:5pt;margin-bottom:5pt">5軸 統計サマリー</div>
+    <table style="width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:10pt">
+      <thead><tr style="background:#f0f4ff">
+        <th style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:left">特性</th>
+        <th style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center">平均</th>
+        <th style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center">最高</th>
+        <th style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center">最低</th>
+        <th style="padding:4pt 6pt;border:1px solid #dce4ff;text-align:center">ばらつき</th>
+      </tr></thead>
+      <tbody>${dimRows}</tbody>
+    </table>
+    <div style="font-size:8pt;font-weight:700;border-left:3pt solid #F4A261;padding-left:5pt;margin-bottom:5pt">受験者一覧</div>
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt">
+      <thead><tr style="background:#f0f4ff">
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff">氏名</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">開放</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">誠実</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">外向</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">協調</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">神経</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center">信頼性</th>
+        <th style="padding:3pt 5pt;border:1px solid #dce4ff">グループ内の特徴</th>
+      </tr></thead>
+      <tbody>${allRecords.map(r=>{
+        const vs=validityStyle(r.validity);
+        const lcp=s=>s>=70?'#1a6e56':s>=40?'#8a5a10':'#4a3a9a';
+        return `<tr>
+          <td style="padding:3pt 5pt;border:1px solid #dce4ff;font-weight:700">${r.name}</td>
+          ${['O','C','E','A','N'].map(d=>`<td style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;font-weight:800;color:${lcp(r.scores[d])}">${r.scores[d]}</td>`).join('')}
+          <td style="padding:3pt 5pt;border:1px solid #dce4ff;text-align:center;color:${vs.col};font-weight:700">${vs.label}</td>
+          <td style="padding:3pt 5pt;border:1px solid #dce4ff;font-size:7pt;color:#444">${groupPositionComment(r,allRecords)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div style="margin-top:8pt;padding-top:5pt;border-top:1px solid #ddd;font-size:6.5pt;color:#aaa">候補者 性格診断システム — Tokutei Ginou</div>`;
 }
 
 // ─── 印刷実行 ───
@@ -316,17 +430,73 @@ function printResult(r){
   setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
 }
 
+function buildIndividualPageWithGroup(r, allRecords){
+  // 個別ページにグループ内位置づけを追加したバージョン
+  const base=buildIndividualPage(r);
+  const posComment=groupPositionComment(r,allRecords);
+  const insert=`
+    <div style="font-size:8pt;font-weight:700;border-left:3pt solid #9B8EF7;padding-left:5pt;margin:6pt 0 3pt">グループ内での位置づけ（${allRecords.length}名中）</div>
+    <div style="background:#f8f5ff;border:1px solid #d8d0ff;border-radius:4pt;padding:5pt 8pt;margin-bottom:6pt;font-size:7.5pt;line-height:1.6">${posComment}</div>`;
+  // 総合所見の前に挿入
+  return base.replace('<div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF',insert+'<div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF');
+}
+
 function printSelected(){
   const selected=state.selectedForPrint;
   if(selected.length===0){alert('印刷する候補者を選択してください');return;}
-  const pages=[
-    `<div class="page-break">${buildGroupRadarPage(selected)}</div>`,
-    ...selected.map((r,i)=>`<div class="${i<selected.length-1?'page-break':''}">${buildIndividualPage(r)}</div>`)
-  ].join('');
-  document.title=`候補者診断結果_${selected.length}名`;
-  document.getElementById('printArea').innerHTML=pages;
-  window.print();
-  setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
+  const CHUNK=6;
+  const chunks=[];
+  for(let i=0;i<selected.length;i+=CHUNK) chunks.push(selected.slice(i,i+CHUNK));
+
+  if(chunks.length===1){
+    // 6人以内 → 1回で印刷
+    const pages=[];
+    pages.push(`<div class="page-break">${buildGroupSummaryPage(selected)}</div>`);
+    pages.push(`<div class="page-break">${buildGroupRadarPage(selected)}</div>`);
+    selected.forEach((r,i)=>{
+      pages.push(`<div class="${i<selected.length-1?'page-break':''}">${buildIndividualPageWithGroup(r,selected)}</div>`);
+    });
+    const from=1, to=selected.length;
+    document.title=`候補者診断結果_${from}～${to}`;
+    document.getElementById('printArea').innerHTML=pages.join('');
+    window.print();
+    setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
+  } else {
+    // 複数チャンク → 最初に全体サマリーを含む第1チャンクを印刷し、
+    // 完了後に次のチャンクへ進む
+    let ci=0;
+    const printChunk=()=>{
+      if(ci>=chunks.length) return;
+      const chunk=chunks[ci];
+      const globalOffset=ci*CHUNK;
+      const from=globalOffset+1;
+      const to=globalOffset+chunk.length;
+      const pages=[];
+      if(ci===0){
+        // 第1チャンクには全体グループサマリーを先頭に追加
+        pages.push(`<div class="page-break">${buildGroupSummaryPage(selected)}</div>`);
+      }
+      pages.push(`<div class="page-break">${buildGroupRadarPage(chunk,ci+1,chunks.length)}</div>`);
+      chunk.forEach((r,i)=>{
+        pages.push(`<div class="${i<chunk.length-1?'page-break':''}">${buildIndividualPageWithGroup(r,selected)}</div>`);
+      });
+      document.title=`候補者診断結果_${from}～${to}`;
+      document.getElementById('printArea').innerHTML=pages.join('');
+      const next=()=>{
+        ci++;
+        if(ci<chunks.length){
+          setTimeout(()=>{printChunk();},500);
+        } else {
+          setTimeout(()=>{document.title='管理者ダッシュボード | Tokutei Ginou';},2000);
+        }
+      };
+      // afterprint イベントで次チャンクへ（1回のみ）
+      const handler=()=>{window.removeEventListener('afterprint',handler);next();};
+      window.addEventListener('afterprint',handler);
+      window.print();
+    };
+    printChunk();
+  }
 }
 
 // ─── STATE ───
@@ -357,10 +527,7 @@ async function deleteCode(code){
 function toggleSelect(r){
   const idx=state.selectedForPrint.findIndex(x=>x.id===r.id);
   if(idx>=0){state.selectedForPrint.splice(idx,1);}
-  else{
-    if(state.selectedForPrint.length>=6){alert('まとめ印刷は最大6人までです');return;}
-    state.selectedForPrint.push(r);
-  }
+  else{state.selectedForPrint.push(r);}
   render();
 }
 
@@ -434,7 +601,7 @@ function renderResultsTab(filtered,stats){
     return `<button class="filter-btn ${active?'active':''}" data-fv="${v}">${l}</button>`;
   }).join('');
   const selBar=sel.length>0?`<div class="sel-bar">
-    <span style="color:#6C9BF7;font-weight:700;font-size:13px">📋 選択中：${sel.length}人 / 最大6人</span>
+    <span style="color:#6C9BF7;font-weight:700;font-size:13px">📋 選択中：${sel.length}人</span>
     <span style="color:rgba(255,255,255,0.6);font-size:12px">${sel.map(r=>r.name).join('、')}</span>
     <button class="btn btn-orange" id="printSelectedBtn" style="margin-left:auto">🖨️ まとめてPDF印刷</button>
     <button class="btn btn-ghost" id="clearSelBtn" style="padding:7px 14px;font-size:12px">選択解除</button>
@@ -484,7 +651,7 @@ function renderResultsTab(filtered,stats){
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">✅ チェックで選択（最大6人）→「まとめてPDF印刷」で比較レーダーチャート＋個別結果を一括印刷</p>`;
+    <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">✅ チェックで選択 →「まとめてPDF印刷」でグループ比較サマリー＋レーダーチャート＋個別結果を一括印刷（7人以上は6人ずつ分割印刷）</p>`;
 }
 
 function renderCodesTab(){
