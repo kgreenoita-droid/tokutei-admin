@@ -296,7 +296,7 @@ function groupStats(allRecords){
   return {avgs,max,min,spread,trend,topC,topA,lowN,highN,dims};
 }
 
-// ─── グループ内の個人位置づけコメント ───
+// ─── グループ内の個人位置づけコメント（傾向文） ───
 function groupPositionComment(r, allRecords){
   const dims=['O','C','E','A','N'];
   const avg=d=>allRecords.reduce((s,x)=>s+x.scores[d],0)/allRecords.length;
@@ -305,16 +305,21 @@ function groupPositionComment(r, allRecords){
     return sorted.findIndex(x=>x.id===r.id)+1;
   };
   const n=allRecords.length;
+  // 傾向語
+  const highDesc={O:'新しいことへの適応力や好奇心がグループ内で際立っています',C:'責任感・計画性がグループの中でも特に高く、信頼度が高いといえます',E:'積極性・社交性がグループ内でトップクラスです',A:'チームワークを重んじる姿勢がグループ内で最も顕著です',N:'緊張・不安を感じやすい傾向がグループ内で最も強く出ています'};
+  const lowDesc={O:'安定・慣れた環境を好む傾向がグループ内で最も強く出ています',C:'柔軟な対応を好む反面、グループ内では計画性が相対的に低めです',E:'物静かで内省的な傾向がグループ内でひときわ目立ちます',A:'自己主張が強い傾向がグループ内で最も際立っています',N:'感情的な安定感はグループ内でトップクラスです'};
+  const highTrend={O:'好奇心・柔軟性が高め',C:'責任感・誠実さが高め',E:'積極性・社交性が高め',A:'協調性・思いやりが高め',N:'繊細さ・感受性が高め'};
+  const lowTrend={O:'安定志向・慣れた環境を好む',C:'柔軟・自由なスタイルを好む',E:'内省的・落ち着いた姿勢',A:'自己主張が明確',N:'感情的に安定している'};
   const notable=[];
   dims.forEach(d=>{
     const diff=r.scores[d]-avg(d);
     const rk=rank(d);
-    if(rk===1) notable.push(`${DIMS[d].ja.name}はグループ内で最も高い（${r.scores[d]}点）`);
-    else if(rk===n) notable.push(`${DIMS[d].ja.name}はグループ内で最も低い（${r.scores[d]}点）`);
-    else if(diff>=20) notable.push(`${DIMS[d].ja.name}は平均より${Math.round(diff)}点高い（${r.scores[d]}点）`);
-    else if(diff<=-20) notable.push(`${DIMS[d].ja.name}は平均より${Math.round(Math.abs(diff))}点低い（${r.scores[d]}点）`);
+    if(rk===1&&n>=3) notable.push(highDesc[d]);
+    else if(rk===n&&n>=3) notable.push(lowDesc[d]);
+    else if(diff>=20) notable.push(`${DIMS[d].ja.name}の面で${highTrend[d]}傾向があり、グループの平均を大きく上回っています`);
+    else if(diff<=-20) notable.push(`${DIMS[d].ja.name}の面で${lowTrend[d]}傾向があり、グループの平均を下回っています`);
   });
-  if(notable.length===0) return 'グループ内では各軸ともほぼ平均的な位置にいます。';
+  if(notable.length===0) return 'グループ内では各特性ともほぼ平均的な傾向にあり、バランスの取れたプロフィールです。';
   return notable.join('。')+'。';
 }
 
@@ -441,8 +446,22 @@ function buildIndividualPageWithGroup(r, allRecords){
   return base.replace('<div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF',insert+'<div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF');
 }
 
+async function updateInterviewNumber(id,val){
+  const sb=supabase();
+  await sb.from('results').update({interview_number:val}).eq('id',id);
+  const r=state.results.find(x=>x.id===id);
+  if(r)r.interview_number=val;
+  const s=state.selectedForPrint.find(x=>x.id===id);
+  if(s)s.interview_number=val;
+}
+
 function printSelected(){
-  const selected=state.selectedForPrint;
+  // 番号順にソート（nullは末尾）
+  const selected=[...state.selectedForPrint].sort((a,b)=>{
+    const an=a.interview_number??Infinity;
+    const bn=b.interview_number??Infinity;
+    return an-bn;
+  });
   if(selected.length===0){alert('印刷する候補者を選択してください');return;}
   const CHUNK=6;
   // 均等分割：できるだけ均等になるよう枚数を決める
@@ -482,7 +501,7 @@ function printSelected(){
     const printChunk=()=>{
       if(ci>=chunks.length) return;
       const chunk=chunks[ci];
-      const globalOffset=ci*CHUNK;
+      const globalOffset=chunks.slice(0,ci).reduce((s,c)=>s+c.length,0);
       const from=globalOffset+1;
       const to=globalOffset+chunk.length;
       const pages=[];
@@ -621,18 +640,20 @@ function renderResultsTab(filtered,stats){
     <button class="btn btn-ghost" id="clearSelBtn" style="padding:7px 14px;font-size:12px">選択解除</button>
   </div>`:'';
   const rows=filtered.length===0
-    ?`<tr><td colspan="11" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
+    ?`<tr><td colspan="12" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
     :filtered.map((r,i)=>{
         const li=LANGUAGES.find(l=>l.code===r.lang);
         const vs=validityStyle(r.validity);
         const isSelected=sel.some(x=>x.id===r.id);
-        const selOrder=sel.findIndex(x=>x.id===r.id);
+        const numVal=r.interview_number!=null?r.interview_number:'';
         return `<tr style="${isSelected?'background:rgba(108,155,247,0.08)':''}">
           <td style="text-align:center">
-            <div style="display:flex;align-items:center;gap:4px">
-              <input type="checkbox" data-sel="${i}" ${isSelected?'checked':''}>
-              ${isSelected?`<span style="color:#6C9BF7;font-size:10px;font-weight:700">${selOrder+1}</span>`:''}
-            </div>
+            <input type="checkbox" data-sel="${i}" ${isSelected?'checked':''}>
+          </td>
+          <td style="text-align:center">
+            <input type="number" min="1" max="50" value="${numVal}" placeholder="—"
+              style="width:48px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:3px 5px;color:#fff;font-size:12px;text-align:center;font-family:inherit"
+              data-numset="${r.id}">
           </td>
           <td style="font-weight:700">${r.name}</td>
           <td><span style="font-size:15px">${li?.flag}</span></td>
@@ -659,7 +680,8 @@ function renderResultsTab(filtered,stats){
       <table>
         <thead><tr>
           <th style="width:50px">選択</th>
-          <th>氏名／番号</th><th>言語</th><th>受験日時</th><th>信頼性</th>
+          <th style="width:60px">番号</th>
+          <th>氏名</th><th>言語</th><th>受験日時</th><th>信頼性</th>
           <th>開放</th><th>誠実</th><th>外向</th><th>協調</th><th>神経</th><th>詳細/PDF</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -782,6 +804,15 @@ function bindDashboard(){
   }));
   document.querySelectorAll('[data-sel]').forEach(cb=>{
     cb.addEventListener('change',()=>{toggleSelect(getFiltered()[parseInt(cb.dataset.sel)]);});
+  });
+  document.querySelectorAll('[data-numset]').forEach(inp=>{
+    inp.addEventListener('change',async()=>{
+      const id=inp.dataset.numset;
+      const val=inp.value===''?null:parseInt(inp.value,10);
+      if(val!==null&&(isNaN(val)||val<1||val>50)){inp.style.borderColor='#e63946';return;}
+      inp.style.borderColor='rgba(255,255,255,0.15)';
+      await updateInterviewNumber(id,val);
+    });
   });
   document.getElementById('printSelectedBtn')?.addEventListener('click',printSelected);
   document.getElementById('clearSelBtn')?.addEventListener('click',clearSelection);
