@@ -446,13 +446,54 @@ function buildIndividualPageWithGroup(r, allRecords){
   return base.replace('<div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF',insert+'<div style="font-size:8pt;font-weight:700;border-left:3pt solid #5BC8AF');
 }
 
-async function updateInterviewNumber(id,val){
-  const sb=supabase();
-  await sb.from('results').update({interview_number:val}).eq('id',id);
-  const r=state.results.find(x=>x.id===id);
-  if(r)r.interview_number=val;
-  const s=state.selectedForPrint.find(x=>x.id===id);
-  if(s)s.interview_number=val;
+async function saveEdits(){
+  const btn=document.getElementById('saveEditsBtn');
+  const msg=document.getElementById('saveEditsMsg');
+  // ボタンを即座に押した感触
+  if(btn){btn.style.transform='scale(0.96)';btn.style.opacity='0.7';}
+  await new Promise(r=>setTimeout(r,120));
+  if(btn){btn.style.transform='';btn.style.opacity='';btn.disabled=true;btn.textContent='保存中...';}
+
+  // 全フィールド収集（変更有無に関わらず全件更新対象にする）
+  const numInputs=[...document.querySelectorAll('[data-numset]')];
+  const nameInputs=[...document.querySelectorAll('[data-nameset]')];
+  const updates={};
+  numInputs.forEach(inp=>{
+    const id=inp.dataset.numset;
+    const v=inp.value;
+    if(!updates[id])updates[id]={};
+    updates[id].interview_number=v===''?null:parseInt(v,10);
+  });
+  nameInputs.forEach(inp=>{
+    const id=inp.dataset.nameset;
+    const v=inp.value.trim();
+    if(v){
+      if(!updates[id])updates[id]={};
+      updates[id].name=v;
+    }
+  });
+  const ids=Object.keys(updates);
+  if(ids.length===0){
+    if(btn){btn.disabled=false;btn.textContent='💾 編集を保存';}
+    if(msg){msg.textContent='変更はありません';setTimeout(()=>{msg.textContent='';},2000);}
+    return;
+  }
+  let ok=true;
+  for(const id of ids){
+    const {error}=await sb.from('results').update(updates[id]).eq('id',id);
+    if(error){console.error('save error',id,error);ok=false;continue;}
+    const r=state.results.find(x=>x.id===id);
+    if(r)Object.assign(r,updates[id]);
+    const s=state.selectedForPrint.find(x=>x.id===id);
+    if(s)Object.assign(s,updates[id]);
+  }
+  if(btn){btn.disabled=false;btn.textContent='💾 編集を保存';}
+  if(msg){
+    msg.textContent=ok?`✅ ${ids.length}件保存しました`:'⚠️ 一部保存に失敗しました';
+    msg.style.color=ok?'#5BC8AF':'#e63946';
+    setTimeout(()=>{msg.textContent='';msg.style.color='rgba(255,255,255,0.5)';},3000);
+  }
+  // render()は呼ばない（入力中の値が消えないよう、stateだけ更新済み）
 }
 
 function printSelected(){
@@ -813,15 +854,7 @@ function bindDashboard(){
   document.querySelectorAll('[data-sel]').forEach(cb=>{
     cb.addEventListener('change',()=>{toggleSelect(getFiltered()[parseInt(cb.dataset.sel)]);});
   });
-  document.querySelectorAll('[data-numset]').forEach(inp=>{
-    inp.addEventListener('change',async()=>{
-      const id=inp.dataset.numset;
-      const val=inp.value===''?null:parseInt(inp.value,10);
-      if(val!==null&&(isNaN(val)||val<1||val>50)){inp.style.borderColor='#e63946';return;}
-      inp.style.borderColor='rgba(255,255,255,0.15)';
-      await updateInterviewNumber(id,val);
-    });
-  });
+  document.getElementById('saveEditsBtn')?.addEventListener('click',saveEdits);
   document.getElementById('printSelectedBtn')?.addEventListener('click',printSelected);
   document.getElementById('clearSelBtn')?.addEventListener('click',clearSelection);
   document.getElementById('addCodeBtn')?.addEventListener('click',()=>{
