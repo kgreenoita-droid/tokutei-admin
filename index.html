@@ -616,7 +616,7 @@ function renderResultsTab(filtered,stats){
         return `<tr style="${isSelected?'background:rgba(108,155,247,0.08)':''}">
           <td style="text-align:center">
             <div style="display:flex;align-items:center;gap:4px">
-              <input type="checkbox" data-sel="${i}" ${isSelected?'checked':''} ${!isSelected&&sel.length>=6?'disabled':''}>
+              <input type="checkbox" data-sel="${i}" ${isSelected?'checked':''}>
               ${isSelected?`<span style="color:#6C9BF7;font-size:10px;font-weight:700">${selOrder+1}</span>`:''}
             </div>
           </td>
