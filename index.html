@@ -449,51 +449,65 @@ function buildIndividualPageWithGroup(r, allRecords){
 async function saveEdits(){
   const btn=document.getElementById('saveEditsBtn');
   const msg=document.getElementById('saveEditsMsg');
-  // ボタンを即座に押した感触
-  if(btn){btn.style.transform='scale(0.96)';btn.style.opacity='0.7';}
-  await new Promise(r=>setTimeout(r,120));
-  if(btn){btn.style.transform='';btn.style.opacity='';btn.disabled=true;btn.textContent='保存中...';}
+  if(btn){btn.disabled=true;btn.textContent='保存中...';}
+  if(msg){msg.textContent='';msg.style.color='rgba(255,255,255,0.5)';}
 
-  // 全フィールド収集（変更有無に関わらず全件更新対象にする）
+  // 変更があった行だけ収集
   const numInputs=[...document.querySelectorAll('[data-numset]')];
   const nameInputs=[...document.querySelectorAll('[data-nameset]')];
   const updates={};
   numInputs.forEach(inp=>{
     const id=inp.dataset.numset;
-    const v=inp.value;
-    if(!updates[id])updates[id]={};
-    updates[id].interview_number=v===''?null:parseInt(v,10);
+    const origNum=inp.dataset.origNum??'';
+    const cur=inp.value;
+    if(cur!==origNum){
+      if(!updates[id])updates[id]={id};
+      updates[id].interview_number=cur===''?null:parseInt(cur,10);
+    }
   });
   nameInputs.forEach(inp=>{
     const id=inp.dataset.nameset;
-    const v=inp.value.trim();
-    if(v){
-      if(!updates[id])updates[id]={};
-      updates[id].name=v;
+    const origName=inp.dataset.origName??'';
+    const cur=inp.value.trim();
+    if(cur&&cur!==origName){
+      if(!updates[id])updates[id]={id};
+      updates[id].name=cur;
     }
   });
-  const ids=Object.keys(updates);
-  if(ids.length===0){
+
+  const rows=Object.values(updates);
+  if(rows.length===0){
     if(btn){btn.disabled=false;btn.textContent='💾 編集を保存';}
     if(msg){msg.textContent='変更はありません';setTimeout(()=>{msg.textContent='';},2000);}
     return;
   }
-  let ok=true;
-  for(const id of ids){
-    const {error}=await sb.from('results').update(updates[id]).eq('id',id);
-    if(error){console.error('save error',id,error);ok=false;continue;}
-    const r=state.results.find(x=>x.id===id);
-    if(r)Object.assign(r,updates[id]);
-    const s=state.selectedForPrint.find(x=>x.id===id);
-    if(s)Object.assign(s,updates[id]);
+
+  // 1件ずつではなく、変更行のみ個別update（upsertはPKが必要なため）
+  let saved=0;
+  for(const row of rows){
+    const {id,...fields}=row;
+    const {error}=await sb.from('results').update(fields).eq('id',id);
+    if(!error){
+      saved++;
+      const r=state.results.find(x=>x.id===id);
+      if(r)Object.assign(r,fields);
+      const s=state.selectedForPrint.find(x=>x.id===id);
+      if(s)Object.assign(s,fields);
+      // orig属性を更新（再保存時に再度変更扱いにならないよう）
+      const ni=document.querySelector(`[data-numset="${id}"]`);
+      if(ni)ni.dataset.origNum=ni.value;
+      const ni2=document.querySelector(`[data-nameset="${id}"]`);
+      if(ni2)ni2.dataset.origName=ni2.value.trim();
+    }
   }
+
   if(btn){btn.disabled=false;btn.textContent='💾 編集を保存';}
   if(msg){
-    msg.textContent=ok?`✅ ${ids.length}件保存しました`:'⚠️ 一部保存に失敗しました';
+    const ok=saved===rows.length;
+    msg.textContent=ok?`✅ ${saved}件保存しました`:`⚠️ ${saved}/${rows.length}件保存（一部失敗）`;
     msg.style.color=ok?'#5BC8AF':'#e63946';
     setTimeout(()=>{msg.textContent='';msg.style.color='rgba(255,255,255,0.5)';},3000);
   }
-  // render()は呼ばない（入力中の値が消えないよう、stateだけ更新済み）
 }
 
 function printSelected(){
