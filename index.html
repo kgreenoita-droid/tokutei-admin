@@ -445,8 +445,22 @@ function printSelected(){
   const selected=state.selectedForPrint;
   if(selected.length===0){alert('印刷する候補者を選択してください');return;}
   const CHUNK=6;
+  // 均等分割：できるだけ均等になるよう枚数を決める
+  // 例）8人→ceil(8/6)=2グループ→4+4、16人→ceil(16/6)=3グループ→6+5+5
+  const numChunks=Math.ceil(selected.length/CHUNK);
+  const baseSize=Math.floor(selected.length/numChunks);
+  const extra=selected.length%numChunks;
+  // extraを後ろのグループから割り当て（前のグループをできるだけ大きく）
+  // 例）7人→2グループ: 4+3ではなく最初を大きく→chunk0=4,chunk1=3
+  // 実際は前から大きく: extra個のグループが(baseSize+1)人、残りがbaseSize人
+  // 8人→base=4,extra=0→4+4 ✓  16人→base=5,extra=1→6+5+5 ✓  7人→base=3,extra=1→4+3
   const chunks=[];
-  for(let i=0;i<selected.length;i+=CHUNK) chunks.push(selected.slice(i,i+CHUNK));
+  let pos=0;
+  for(let ci=0;ci<numChunks;ci++){
+    const size=baseSize+(ci<extra?1:0);
+    chunks.push(selected.slice(pos,pos+size));
+    pos+=size;
+  }
 
   if(chunks.length===1){
     // 6人以内 → 1回で印刷
