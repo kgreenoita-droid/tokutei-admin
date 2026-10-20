@@ -653,9 +653,13 @@ function renderResultsTab(filtered,stats){
           <td style="text-align:center">
             <input type="number" min="1" max="50" value="${numVal}" placeholder="—"
               style="width:48px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:3px 5px;color:#fff;font-size:12px;text-align:center;font-family:inherit"
-              data-numset="${r.id}">
+              data-numset="${r.id}" data-orig-num="${numVal}">
           </td>
-          <td style="font-weight:700">${r.name}</td>
+          <td>
+            <input type="text" value="${r.name.replace(/"/g,'&quot;')}"
+              style="width:100%;min-width:100px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:3px 7px;color:#fff;font-size:13px;font-weight:700;font-family:inherit"
+              data-nameset="${r.id}" data-orig-name="${r.name.replace(/"/g,'&quot;')}">
+          </td>
           <td><span style="font-size:15px">${li?.flag}</span></td>
           <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${fmt(r.date)}</td>
           <td><span class="badge" style="background:${vs.bg};color:${vs.col}">${vs.label}</span></td>
@@ -687,7 +691,11 @@ function renderResultsTab(filtered,stats){
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">✅ チェックで選択 →「まとめてPDF印刷」でグループ比較サマリー＋レーダーチャート＋個別結果を一括印刷（7人以上は6人ずつ分割印刷）</p>`;
+    <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:8px">✅ チェックで選択 →「まとめてPDF印刷」でグループ比較サマリー＋レーダーチャート＋個別結果を一括印刷（7人以上は6人ずつ分割印刷）</p>
+    <div style="position:sticky;bottom:0;padding:12px 0 4px;background:linear-gradient(transparent,rgba(18,20,38,0.97) 30%);display:flex;align-items:center;gap:12px;z-index:10">
+      <button class="btn" id="saveEditsBtn" style="background:linear-gradient(135deg,#2a9d2a,#1e7a1e);border-color:#2a9d2a;padding:10px 28px;font-size:14px;font-weight:700">💾 編集を保存</button>
+      <span id="saveEditsMsg" style="font-size:12px;color:rgba(255,255,255,0.5)"></span>
+    </div>`;
 }
 
 function renderCodesTab(){
