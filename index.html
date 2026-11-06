@@ -591,7 +591,7 @@ function printSelected(){
 function isAuthed(){return localStorage.getItem('tg_admin_authed')==='true';}
 function setAuthed(v){if(v)localStorage.setItem('tg_admin_authed','true');else localStorage.removeItem('tg_admin_authed');}
 
-let state={tab:'results',codes:[],results:[],results300:[],detail:null,detail300:null,filterLang:'all',filterV:'all',filter300Lang:'all',newLang:'id',newNote:'',loading:false,copyMsg:{},pwErr:false,selectedForPrint:[]};
+let state={tab:'results',codes:[],results:[],results300:[],detail:null,detail300:null,filterLang:'all',filterV:'all',filter300Lang:'all',newLang:'id',newNote:'',loading:false,copyMsg:{},pwErr:false,selectedForPrint:[],selected300:[]};
 
 async function loadAll(){
   state.loading=true;render();
@@ -611,6 +611,29 @@ async function addCode(){
 
 async function deleteCode(code){
   await sb.from('codes').delete().eq('code',code);await loadAll();
+}
+
+async function deleteResults(ids){
+  if(!ids||ids.length===0)return;
+  if(!confirm(`選択した${ids.length}件を削除しますか？この操作は元に戻せません。`))return;
+  await sb.from('results').delete().in('id',ids);
+  state.selectedForPrint=state.selectedForPrint.filter(r=>!ids.includes(r.id));
+  await loadAll();
+}
+
+async function deleteResults300(ids){
+  if(!ids||ids.length===0)return;
+  if(!confirm(`選択した${ids.length}件を削除しますか？この操作は元に戻せません。`))return;
+  await sb.from('results_300').delete().in('id',ids);
+  state.selected300=state.selected300.filter(r=>!ids.includes(r.id));
+  await loadAll();
+}
+
+function toggleSelect300(r){
+  const idx=state.selected300.findIndex(x=>x.id===r.id);
+  if(idx>=0){state.selected300.splice(idx,1);}
+  else{state.selected300.push(r);}
+  render();
 }
 
 function toggleSelect(r){
@@ -702,6 +725,7 @@ function renderResultsTab(filtered,stats){
     <span style="color:#6C9BF7;font-weight:700;font-size:13px">📋 選択中：${sel.length}人</span>
     <span style="color:rgba(255,255,255,0.6);font-size:12px">${sel.map(r=>r.name).join('、')}</span>
     <button class="btn btn-orange" id="printSelectedBtn" style="margin-left:auto">🖨️ まとめてPDF印刷</button>
+    <button class="btn btn-pink" id="deleteSelectedBtn" style="padding:7px 14px;font-size:12px">🗑️ 削除</button>
     <button class="btn btn-ghost" id="clearSelBtn" style="padding:7px 14px;font-size:12px">選択解除</button>
   </div>`:'';
   const rows=filtered.length===0
@@ -779,16 +803,26 @@ function renderResults300Tab(){
     return{label:'× 要注意',col:'#E76F9A'};
   };
 
+  const sel300=state.selected300;
+  const sel300Bar=sel300.length>0?`<div class="sel-bar">
+    <span style="color:#E76F9A;font-weight:700;font-size:13px">🗑️ 選択中：${sel300.length}件</span>
+    <span style="color:rgba(255,255,255,0.6);font-size:12px">${sel300.map(r=>r.candidate_name||r.candidate_id||'—').join('、')}</span>
+    <button class="btn btn-pink" id="delete300Btn" style="margin-left:auto;padding:7px 14px;font-size:12px">🗑️ 削除</button>
+    <button class="btn btn-ghost" id="clearSel300Btn" style="padding:7px 14px;font-size:12px">選択解除</button>
+  </div>`:'';
+
   const rows=filtered.length===0
     ?`<tr><td colspan="11" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px">${state.results300.length===0?'まだ受験データがありません':'条件に一致するデータがありません'}</td></tr>`
     :filtered.map((r,i)=>{
         const li=LANGUAGES.find(l=>l.code===r.lang);
         const rl=reliabilityLabel(r.reliability);
-        const sc={O:r.corrected_O??r.surface_O,C:r.corrected_C??r.surface_C,E:r.corrected_E??r.surface_E,A:r.corrected_A??r.surface_A,N:r.corrected_N??r.surface_N};
+        const sc={O:r.corrected_o??r.surface_o,C:r.corrected_c??r.surface_c,E:r.corrected_e??r.surface_e,A:r.corrected_a??r.surface_a,N:r.corrected_n??r.surface_n};
         const dateStr=r.submitted_at?new Date(r.submitted_at).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
-        return `<tr>
+        const isSelected=sel300.some(x=>x.id===r.id);
+        return `<tr style="${isSelected?'background:rgba(231,111,154,0.08)':''}">
+          <td style="text-align:center"><input type="checkbox" data-sel300="${i}" ${isSelected?'checked':''}></td>
           <td style="font-weight:700;font-size:13px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.candidate_id||''}">${r.candidate_id||'—'}</td>
-          <td>${r.code||'—'}</td>
+          <td style="font-weight:700;font-size:13px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.candidate_name||'—'}</td>
           <td><span style="font-size:15px">${li?.flag||''}</span></td>
           <td style="color:rgba(255,255,255,0.4);font-size:11px;white-space:nowrap">${dateStr}</td>
           <td><span style="font-weight:700;color:${rl.col}">${rl.label}</span></td>
@@ -806,10 +840,11 @@ function renderResults300Tab(){
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       ${langFilters}
     </div>
+    ${sel300Bar}
     <div class="glass" style="overflow-x:auto">
       <table>
         <thead><tr>
-          <th>候補者ID</th><th>受験コード</th><th>言語</th><th>受験日時</th><th>信頼性</th>
+          <th style="width:40px">選択</th><th>候補者ID</th><th>氏名</th><th>言語</th><th>受験日時</th><th>信頼性</th>
           <th>開放</th><th>誠実</th><th>外向</th><th>協調</th><th>神経</th><th>詳細</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -828,7 +863,7 @@ function renderDetail300(r){
     return{label:'× 要注意',col:'#E76F9A'};
   };
   const rl=reliabilityLabel(r.reliability);
-  const sc={O:r.corrected_O??r.surface_O,C:r.corrected_C??r.surface_C,E:r.corrected_E??r.surface_E,A:r.corrected_A??r.surface_A,N:r.corrected_N??r.surface_N};
+  const sc={O:r.corrected_o??r.surface_o,C:r.corrected_c??r.surface_c,E:r.corrected_e??r.surface_e,A:r.corrected_a??r.surface_a,N:r.corrected_n??r.surface_n};
   const dateStr=r.submitted_at?new Date(r.submitted_at).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
   const qs=generateIQs(sc);
 
@@ -837,7 +872,7 @@ function renderDetail300(r){
       <div style="display:flex;justify-content:space-between;margin-bottom:3px">
         <span style="color:${DIMS[d].color};font-weight:700;font-size:12px">${DIMS[d].icon} ${DIMS[d].ja.name}</span>
         <div style="display:flex;gap:12px;align-items:center">
-          <span style="color:rgba(255,255,255,0.35);font-size:11px">表面: ${r['surface_'+d]??'—'}</span>
+          <span style="color:rgba(255,255,255,0.35);font-size:11px">表面: ${r['surface_'+d.toLowerCase()]??'—'}</span>
           <span style="color:${lc(s??0)};font-weight:800;font-size:13px">${s??'—'}<span style="font-size:10px;opacity:0.6"> (${lv(s??0)})</span></span>
         </div>
       </div>
@@ -849,13 +884,13 @@ function renderDetail300(r){
   return `<div class="page">
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
       <button class="btn btn-ghost" id="back300Btn">← 300問一覧へ</button>
-      <h2 style="font-size:18px;font-weight:800">🧠 ${li?.flag||''} ${r.candidate_id||'—'}</h2>
+      <h2 style="font-size:18px;font-weight:800">🧠 ${li?.flag||''} ${r.candidate_name||r.candidate_id||'—'}</h2>
       <span style="color:rgba(255,255,255,0.4);font-size:12px">${dateStr}</span>
       <span class="badge" style="background:rgba(108,155,247,0.15);border:1px solid rgba(108,155,247,0.3);color:#6C9BF7">300問テスト</span>
       <span class="badge" style="color:${rl.col}">信頼性：${rl.label}</span>
     </div>
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;gap:20px;flex-wrap:wrap;font-size:12px">
-      <div><span style="color:rgba(255,255,255,0.4)">受験コード：</span><span style="font-weight:700;font-family:monospace">${r.code||'—'}</span></div>
+      <div><span style="color:rgba(255,255,255,0.4)">氏名：</span><span style="font-weight:700">${r.candidate_name||'—'}</span></div>
       <div><span style="color:rgba(255,255,255,0.4)">候補者ID：</span><span style="font-weight:700">${r.candidate_id||'—'}</span></div>
       <div><span style="color:rgba(255,255,255,0.4)">再掲一致率：</span><span style="color:#5BC8AF;font-weight:700">${r.repeat_rate??'—'}%</span></div>
       <div><span style="color:rgba(255,255,255,0.4)">一貫性：</span><span style="color:#6C9BF7;font-weight:700">${r.consistency??'—'}</span></div>
@@ -1004,7 +1039,13 @@ function bindDashboard(){
   });
   document.getElementById('saveEditsBtn')?.addEventListener('click',saveEdits);
   document.getElementById('printSelectedBtn')?.addEventListener('click',printSelected);
+  document.getElementById('deleteSelectedBtn')?.addEventListener('click',()=>deleteResults(state.selectedForPrint.map(r=>r.id)));
   document.getElementById('clearSelBtn')?.addEventListener('click',clearSelection);
+  document.querySelectorAll('[data-sel300]').forEach(cb=>{
+    cb.addEventListener('change',()=>{toggleSelect300(getFiltered300()[parseInt(cb.dataset.sel300)]);});
+  });
+  document.getElementById('delete300Btn')?.addEventListener('click',()=>deleteResults300(state.selected300.map(r=>r.id)));
+  document.getElementById('clearSel300Btn')?.addEventListener('click',()=>{state.selected300=[];render();});
   document.getElementById('addCodeBtn')?.addEventListener('click',()=>{
     state.newLang=document.getElementById('newLangSel')?.value||'id';
     state.newNote=document.getElementById('newNoteInput')?.value||'';
